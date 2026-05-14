@@ -1,0 +1,227 @@
+# =============================================================================
+# shm-next — Docker Compose
+# =============================================================================
+# Dev:  docker compose --profile dev up
+# Prod: docker compose --profile prod up -d
+# =============================================================================
+
+services:
+  # ============================================================
+  # PostgreSQL 16
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-shm}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-shm_secret}
+      POSTGRES_DB: ${DB_NAME:-shm}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shm}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # ============================================================
+  # Redis 7 (кэш, брокер задач, rate limiting)
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # ============================================================
+  # API Server (Litestar + Uvicorn)
+  # ============================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-shm}:${DB_PASSWORD:-shm_secret}@postgres:5432/${DB_NAME:-shm}
+      - REDIS_URL=redis://redis:6379/0
+      - TASKIQ_BROKER_URL=redis://redis:6379/1
+      - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production-use-at-least-32-chars}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    # Профиль dev — с hot-reload
+    profiles:
+      - dev
+    volumes:
+      - ./app:/app/app:ro
+    command: >
+      uvicorn app.api.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers 1
+      --reload
+      --log-level debug
+      --proxy-headers
+      --forwarded-allow-ips='*'
+
+  # ============================================================
+  # API Server (Production — multi-worker, без hot-reload)
+  # ============================================================
+  api-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-shm}:${DB_PASSWORD:-shm_secret}@postgres:5432/${DB_NAME:-shm}
+      - REDIS_URL=redis://redis:6379/0
+      - TASKIQ_BROKER_URL=redis://redis:6379/1
+      - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=false
+      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+    profiles:
+      - prod
+    command: >
+      uvicorn app.api.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers ${WEB_CONCURRENCY:-4}
+      --log-level warning
+      --proxy-headers
+      --forwarded-allow-ips='*'
+
+  # ============================================================
+  # Taskiq Worker
+  # ============================================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-shm}:${DB_PASSWORD:-shm_secret}@postgres:5432/${DB_NAME:-shm}
+      - REDIS_URL=redis://redis:6379/0
+      - TASKIQ_BROKER_URL=redis://redis:6379/1
+      - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    profiles:
+      - dev
+    command: >
+      taskiq app.worker.app:broker
+      --workers 2
+      --log-level info
+
+  worker-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-shm}:${DB_PASSWORD:-shm_secret}@postgres:5432/${DB_NAME:-shm}
+      - REDIS_URL=redis://redis:6379/0
+      - TASKIQ_BROKER_URL=redis://redis:6379/1
+      - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=false
+      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+    profiles:
+      - prod
+    command: >
+      taskiq app.worker.app:broker
+      --workers ${WORKER_CONCURRENCY:-4}
+      --log-level warning
+
+  # ============================================================
+  # Admin Panel (Jinja2 + HTMX, встроенный в Litestar)
+  # ============================================================
+  # Админка работает как часть API-сервера на том же порту,
+  # но на пути /admin/
+  # В продакшене рекомендуется добавить Nginx/Traefik перед API.
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local

@@ -1,0 +1,216 @@
+# =============================================================================
+# shm-next — Project Configuration
+# =============================================================================
+[project]
+name = "shm-next"
+version = "3.0.0"
+description = "SHM Next — Система управления абонентами нового поколения"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "SHM Team", email = "team@shm.local"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Litestar",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Architecture :: Clean Architecture",
+]
+dependencies = [
+    # === Core ===
+    "litestar>=2.8,<3.0",
+    "sqlalchemy[asyncio]>=2.0,<3.0",
+    "asyncpg>=0.29,<1.0",
+    "pydantic>=2.0,<3.0",
+    "pydantic-settings>=2.0,<3.0",
+    "structlog>=23.0,<25.0",
+    "httpx>=0.25,<1.0",
+    "redis[hiredis]>=5.0,<6.0",
+    "aioredis>=2.0,<3.0",
+
+    # === Auth ===
+    "pyjwt>=2.8,<3.0",
+    "python-multipart>=0.0.6",
+    "passlib[bcrypt]>=1.7,<2.0",
+
+    # === Queue ===
+    "taskiq>=0.6,<1.0",
+    "taskiq-schedule>=0.3,<1.0",
+    "taskiq-priority>=0.2,<1.0",
+
+    # === Background tasks ===
+    "arq>=0.26,<1.0",
+
+    === Database ===
+    "alembic>=1.13,<2.0",
+
+    # === Monitoring ===
+    "prometheus-client>=0.19,<1.0",
+    "opentelemetry-api>=1.21,<2.0",
+    "opentelemetry-sdk>=1.21,<2.0",
+
+    # === Utils ===
+    "python-dateutil>=2.8,<3.0",
+    "apscheduler>=3.10,<4.0",
+    "ujson>=5.8,<6.0",
+    "uvicorn[standard]>=0.27,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # === Testing ===
+    "pytest>=7.4,<9.0",
+    "pytest-asyncio>=0.23,<1.0",
+    "pytest-cov>=4.1,<6.0",
+    "pytest-xdist>=3.5,<4.0",
+    "httpx>=0.25,<1.0",
+    "factory-boy>=3.3,<4.0",
+    "faker>=20.0,<25.0",
+    "freezegun>=1.3,<2.0",
+    "pytest-mock>=3.11,<4.0",
+    "pytest-subtests>=0.10,<1.0",
+
+    # === Linting & Formatting ===
+    "ruff>=0.1.8,<1.0",
+    "black>=23.0,<25.0",
+    "isort>=5.12,<6.0",
+    "mypy>=1.7,<2.0",
+    "pylint>=3.0,<4.0",
+    "bandit>=1.7,<2.0",
+    "safety>=2.3,<3.0",
+
+    # === Documentation ===
+    "mkdocs>=1.5,<1.6",
+    "mkdocs-material>=9.4,<1.6",
+    "mkdocstrings[python]>=0.24,<1.0",
+
+    # === Dev Tools ===
+    "ipython>=8.16,<9.0",
+    "ipdb>=0.13,<1.0",
+    "django-debug-toolbar>=4.3,<5.0",
+]
+
+[project.scripts]
+shm-next = "app.api.app:main"
+
+[project.urls]
+Homepage = "https://github.com/wiregui/shm-next"
+Documentation = "https://shm-next.readthedocs.io"
+Repository = "https://github.com/wiregui/shm-next.git"
+Issues = "https://github.com/wiregui/shm-next/issues"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*", "*_test"]
+python_classes = ["Test*"]
+asyncio_mode = "auto"
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "-x",
+    "--cov=app",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=json",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py311", "py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "S",   # flake8-bandit
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
+    "DTZ", # flake8-datetimez
+    "T20", # flake8-print
+    "RUF", # ruff-specific
+]
+ignore = [
+    "S101",  # allow assert
+    "S104",  # possible binding to 0.0.0.0
+    "E501",  # line too long (handled by black)
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "litestar.*",
+    "sqlalchemy.*",
+    "asyncpg.*",
+    "structlog.*",
+    "taskiq.*",
+    "redis.*",
+    "jwt.*",
+    "PyJWT.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+]
+show_missing = true
+precision = 2

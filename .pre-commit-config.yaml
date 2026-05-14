@@ -1,0 +1,72 @@
+# =============================================================================
+# Pre-commit hooks
+# Запуск: pre-commit install
+# Ручной запуск: pre-commit run --all-files
+# =============================================================================
+repos:
+  # === Ruff (linter + formatter) ===
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # === mypy ===
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic-settings
+          - litestar
+          - sqlalchemy
+          - alembic
+          - taskiq
+          - structlog
+          - jinja2
+          - sentry-sdk
+        args:
+          - --config-file=mypy.ini
+          - --ignore-missing-imports
+
+  # === Black (резервный форматтер) ===
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  # === isort ===
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        args: [--profile, black, --combine-as-imports]
+
+  # === Проверка yaml ===
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-d, relaxed]
+        types: [yaml]
+
+  # === Проверка shell ===
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+
+  # === Трейлинг пробелы, конец файла ===
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: requirements-txt-fixer
