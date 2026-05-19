@@ -3,6 +3,7 @@
 # =============================================================================
 from __future__ import annotations
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -14,6 +15,11 @@ config = context.config
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# Подстановка URL из переменной окружения
+db_url = os.environ.get("ALEMBIC_DB_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 target_metadata = Base.metadata
 

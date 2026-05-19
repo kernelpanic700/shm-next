@@ -27,7 +27,7 @@ COPY pyproject.toml ./
 # Создаём виртуальное окружение и устанавливаем зависимости
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN uv pip install --no-dev .
+RUN uv pip install .
 
 # ============================================================
 # Stage 2: Runtime
@@ -76,4 +76,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 EXPOSE 8000
 
 # Точка входа
-ENTRYPOINT ["python", "-m", "app.api.main"]
+CMD ["uvicorn", "app.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

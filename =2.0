@@ -1,0 +1,73 @@
+Collecting litestar
+  Using cached litestar-2.21.1-py3-none-any.whl.metadata (26 kB)
+Collecting asyncpg
+  Using cached asyncpg-0.31.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (4.4 kB)
+Collecting structlog
+  Downloading structlog-25.5.0-py3-none-any.whl.metadata (9.5 kB)
+Requirement already satisfied: python-dateutil in ./.venv/lib/python3.12/site-packages (2.9.0.post0)
+Collecting sqlalchemy[asyncio]
+  Using cached sqlalchemy-2.0.49-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (9.5 kB)
+Collecting redis[hiredis]
+  Downloading redis-7.4.0-py3-none-any.whl.metadata (12 kB)
+Requirement already satisfied: anyio>=3 in ./.venv/lib/python3.12/site-packages (from litestar) (4.13.0)
+Requirement already satisfied: click in ./.venv/lib/python3.12/site-packages (from litestar) (8.3.3)
+Requirement already satisfied: httpx>=0.22 in ./.venv/lib/python3.12/site-packages (from litestar) (0.28.1)
+Collecting litestar-htmx>=0.4.0 (from litestar)
+  Downloading litestar_htmx-0.5.0-py3-none-any.whl.metadata (1.9 kB)
+Collecting msgspec>=0.18.2 (from litestar)
+  Downloading msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.8 kB)
+Collecting multidict>=6.0.2 (from litestar)
+  Using cached multidict-6.7.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+Collecting multipart>=1.2.0 (from litestar)
+  Downloading multipart-1.3.1-py3-none-any.whl.metadata (4.9 kB)
+Collecting polyfactory>=2.6.3 (from litestar)
+  Downloading polyfactory-3.3.0-py3-none-any.whl.metadata (27 kB)
+Collecting pyyaml (from litestar)
+  Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Collecting rich-click (from litestar)
+  Downloading rich_click-1.9.7-py3-none-any.whl.metadata (8.7 kB)
+Collecting rich>=13.0.0 (from litestar)
+  Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+Collecting sniffio>=1.3.1 (from litestar)
+  Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+Requirement already satisfied: typing-extensions in ./.venv/lib/python3.12/site-packages (from litestar) (4.15.0)
+Collecting greenlet>=1 (from sqlalchemy[asyncio])
+  Downloading greenlet-3.5.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.7 kB)
+Collecting hiredis>=3.2.0 (from redis[hiredis])
+  Downloading hiredis-3.3.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (7.5 kB)
+Requirement already satisfied: six>=1.5 in ./.venv/lib/python3.12/site-packages (from python-dateutil) (1.17.0)
+Requirement already satisfied: idna>=2.8 in ./.venv/lib/python3.12/site-packages (from anyio>=3->litestar) (3.15)
+Requirement already satisfied: certifi in ./.venv/lib/python3.12/site-packages (from httpx>=0.22->litestar) (2026.4.22)
+Requirement already satisfied: httpcore==1.* in ./.venv/lib/python3.12/site-packages (from httpx>=0.22->litestar) (1.0.9)
+Requirement already satisfied: h11>=0.16 in ./.venv/lib/python3.12/site-packages (from httpcore==1.*->httpx>=0.22->litestar) (0.16.0)
+Requirement already satisfied: faker>=5.0.0 in ./.venv/lib/python3.12/site-packages (from polyfactory>=2.6.3->litestar) (40.18.0)
+Collecting markdown-it-py>=2.2.0 (from rich>=13.0.0->litestar)
+  Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in ./.venv/lib/python3.12/site-packages (from rich>=13.0.0->litestar) (2.20.0)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.0.0->litestar)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Downloading litestar-2.21.1-py3-none-any.whl (568 kB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/568.3 kB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;2;114;156;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m568.3/568.3 kB[0m [31m5.7 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading sqlalchemy-2.0.49-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.4 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/3.4 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;2;249;38;114m━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m1.3/3.4 MB[0m [31m10.6 MB/s[0m eta [36m0:00:01[0m[2K   [38;2;114;156;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m3.4/3.4 MB[0m [31m8.6 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading asyncpg-0.31.0-cp312-cp312-manylinux_2_28_x86_64.whl (3.5 MB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/3.5 MB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━━━━━━[0m [32m2.1/3.5 MB[0m [31m10.7 MB/s[0m eta [36m0:00:01[0m[2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━[0m [32m3.1/3.5 MB[0m [31m7.8 MB/s[0m eta [36m0:00:01[0m[2K   [38;2;114;156;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m3.5/3.5 MB[0m [31m7.4 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading redis-7.4.0-py3-none-any.whl (409 kB)
+Downloading structlog-25.5.0-py3-none-any.whl (72 kB)
+Downloading greenlet-3.5.0-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (611 kB)
+[?25l   [38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/611.4 kB[0m [31m?[0m eta [36m-:--:--[0m[2K   [38;2;114;156;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m611.4/611.4 kB[0m [31m6.8 MB/s[0m  [33m0:00:00[0m
+[?25hDownloading hiredis-3.3.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (172 kB)
+Downloading litestar_htmx-0.5.0-py3-none-any.whl (10.0 kB)
+Downloading msgspec-0.21.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (225 kB)
+Using cached multidict-6.7.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (256 kB)
+Downloading multipart-1.3.1-py3-none-any.whl (15 kB)
+Downloading polyfactory-3.3.0-py3-none-any.whl (62 kB)
+Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+Downloading rich_click-1.9.7-py3-none-any.whl (71 kB)
+Installing collected packages: structlog, sniffio, redis, pyyaml, polyfactory, multipart, multidict, msgspec, mdurl, litestar-htmx, hiredis, greenlet, asyncpg, sqlalchemy, markdown-it-py, rich, rich-click, litestar
+[?25l[2K   [38;2;249;38;114m━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m 2/18[0m [redis][2K   [38;2;249;38;114m━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m 2/18[0m [redis][2K   [38;2;249;38;114m━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m 2/18[0m [redis][2K   [38;2;249;38;114m━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m 3/18[0m [pyyaml][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━━━━━━━━━━━━[0m [32m 8/18[0m [mdurl][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━━━[0m [32m12/18[0m [asyncpg][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━━━━━━━━[0m [32m13/18[0m [sqlalchemy][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━[0m [32m15/18[0m [rich][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;5;237m╺[0m[38;5;237m━━━━━━[0m [32m15/18[0m [rich][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━━━[0m [32m16/18[0m [rich-click][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━[0m [32m17/18[0m [litestar][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━[0m [32m17/18[0m [litestar][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━[0m [32m17/18[0m [litestar][2K   [38;2;249;38;114m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[38;2;249;38;114m╸[0m[38;5;237m━━[0m [32m17/18[0m [litestar][2K   [38;2;114;156;31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m18/18[0m [litestar]
+[?25h[1A[2KSuccessfully installed asyncpg-0.31.0 greenlet-3.5.0 hiredis-3.3.1 litestar-2.21.1 litestar-htmx-0.5.0 markdown-it-py-4.2.0 mdurl-0.1.2 msgspec-0.21.1 multidict-6.7.1 multipart-1.3.1 polyfactory-3.3.0 pyyaml-6.0.3 redis-7.4.0 rich-15.0.0 rich-click-1.9.7 sniffio-1.3.1 sqlalchemy-2.0.49 structlog-25.5.0

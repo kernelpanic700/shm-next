@@ -1,0 +1,161 @@
+# =============================================================================
+# shm-next — Production Docker Compose
+# =============================================================================
+# Usage: docker compose -f docker-compose.prod.yml up -d
+# =============================================================================
+
+# Extend base docker-compose.yml
+# Note: For full production use, add Traefik/Nginx reverse proxy
+
+services:
+  # ============================================================
+  # PostgreSQL 16 (Production)
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:?DB_USER required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+      POSTGRES_DB: ${DB_NAME:?DB_NAME required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Backup cron job
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================
+  # Redis 7 (Production)
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================
+  # API Server (Production)
+  # =============================================================
+  api:
+    image: ghcr.io/${ORG:-your-org}/shm-next:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - TASKIQ_BROKER_URL=redis://redis:6379/1
+      - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY required}
+      - DEBUG=false
+      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
+      - WORKERS=${WEB_CONCURRENCY:-4}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    # Uncomment for Swarm/K8s deployments
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
+  # ============================================================
+  # Worker (Production)
+  # ============================================================
+  worker:
+    image: ghcr.io/${ORG:-your-org}/shm-next:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - TASKIQ_BROKER_URL=redis://redis:6379/1
+      - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY required}
+      - DEBUG=false
+      - LOG_LEVEL=${LOG_LEVEL:-WARNING}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    command: >
+      taskiq app.worker.app:broker
+      --workers ${WORKER_CONCURRENCY:-4}
+      --log-level warning
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local

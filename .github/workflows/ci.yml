@@ -1,0 +1,65 @@
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --all-extras --dev
+      - run: uv run ruff check app/ tests/
+      - run: uv run ruff format --check app/ tests/
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shm
+          POSTGRES_PASSWORD: shm_secret
+          POSTGRES_DB: shm_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --all-extras --dev
+      - run: alembic upgrade head
+        env:
+          ALEMBIC_DB_URL: postgresql+asyncpg://shm:shm_secret@localhost:5432/shm_test
+      - run: uv run pytest tests/ -x -q --tb=short
+        env:
+          DATABASE_URL: postgresql+asyncpg://shm:shm_secret@localhost:5432/shm_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key
+          SENTRY_DSN: ""
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --all-extras --dev
+      - run: uv run bandit -r app/ -ll
