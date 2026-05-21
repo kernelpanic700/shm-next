@@ -208,6 +208,39 @@ pytest tests/ -v --cov=app
 4. Добавить сервис в `app/core/services/`
 5. Добавить контроллер в `app/api/v1/`
 
+## 🎨 Admin Panel
+
+Современный веб-интерфейс на Next.js 14 (App Router) для управления системой.
+
+### Страницы
+
+| Страница | Описание |
+|----------|----------|
+| `/abonents` | Управление абонентами (поиск, фильтры, действия) |
+| `/abonents/[id]` | Детальная карточка абонента с историей |
+| `/tariffs` | Список тарифов |
+| `/services` | Управление услугами |
+| `/payments` | Мониторинг платежей |
+| `/spool` | Очередь задач (SPOOL) |
+| `/reports` | Аналитика и отчёты |
+
+### Запуск Admin Panel
+
+```bash
+cd admin
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # Production сборка
+```
+
+### Технологии
+
+- **Next.js 14.2** + App Router
+- **TypeScript** + TanStack Query v5
+- **TanStack Table v8** + Radix UI
+- **Recharts** для графиков
+- **Tailwind CSS**
+
 ## 🧪 Тестирование
 
 ```bash

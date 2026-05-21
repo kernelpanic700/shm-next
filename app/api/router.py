@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from litestar import Router
 
-from app.api.v1 import abonents, auth, billing, events, invoices, payments, services, spool, tariffs, webhooks
+from app.api.v1 import abonents, auth, billing, dashboard, events, invoices, payments, services, spool, tariffs, webhooks
 
 
 def create_router(config=None) -> Router:
@@ -40,5 +40,6 @@ def create_router(config=None) -> Router:
             config.router,
             invoices.router,
             webhooks.router,
+            dashboard.router,
         ],
     )
