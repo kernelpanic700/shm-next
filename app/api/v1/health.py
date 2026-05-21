@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from litestar import Controller, get
 
@@ -23,7 +23,7 @@ class HealthController(Controller):
         """Проверка доступности API."""
         return {
             "status": "ok",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "version": "3.0.0",
         }
 

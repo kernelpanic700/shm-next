@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from taskiq import TaskiqDepends
@@ -20,7 +20,7 @@ from app.worker.brokers import broker
 def _calculate_execute_after(retry_count: int) -> datetime:
     """Экспоненциальный backoff: 30s, 1m, 2m, 4m, 8m..."""
     delay_seconds = min(30 * (2 ** retry_count), 3600)  # Макс 1 час
-    return datetime.utcnow() + timedelta(seconds=delay_seconds)
+    return datetime.now(UTC) + timedelta(seconds=delay_seconds)
 
 
 async def process_spool_task(
@@ -38,7 +38,7 @@ async def process_spool_task(
 
         # Проверка статуса и времени выполнения
         if task.status != "NEW":
-            if task.execute_after and task.execute_after > datetime.utcnow():
+            if task.execute_after and task.execute_after > datetime.now(UTC):
                 return {"status": "skipped", "message": "Not scheduled yet"}
             if task.status == "COMPLETED":
                 return {"status": "skipped", "message": "Already completed"}
@@ -48,7 +48,7 @@ async def process_spool_task(
         # Пометить PROCESSING
         task.status = "PROCESSING"
         task.worker_id = asyncio.current_task().get_name()
-        task.started_at = datetime.utcnow()
+        task.started_at = datetime.now(UTC)
         await uow.spool.save(task)
         await uow.commit()
 
@@ -58,7 +58,7 @@ async def process_spool_task(
 
         async with uow:
             task.status = "COMPLETED"
-            task.completed_at = datetime.utcnow()
+            task.completed_at = datetime.now(UTC)
             task.result = result
             await uow.spool.save(task)
             await uow.commit()
@@ -71,7 +71,7 @@ async def process_spool_task(
 
             if task.retry_count >= task.max_retries:
                 task.status = "FAILED"
-                task.failed_at = datetime.utcnow()
+                task.failed_at = datetime.now(UTC)
                 task.error_message = str(e)
             else:
                 task.status = "RETRY"

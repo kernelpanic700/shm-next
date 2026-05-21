@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -59,7 +59,7 @@ class NotificationRepository:
         """Отметить уведомление как отправленное."""
         notification = await self._session.get(NotificationModel, notification_id)
         if notification:
-            notification.sent_at = datetime.utcnow()
+            notification.sent_at = datetime.now(UTC)
             notification.status = "SENT"
             await self._session.flush()
             return True

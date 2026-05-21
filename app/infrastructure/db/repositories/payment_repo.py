@@ -3,7 +3,7 @@
 # =============================================================================
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -87,7 +87,7 @@ class PaymentRepository(PaymentRepositoryProtocol):
 
         if payment and payment.status == "NEW":
             payment.status = "COMPLETED"
-            payment.completed_at = datetime.utcnow()
+            payment.completed_at = datetime.now(UTC)
             await self._session.flush()
             return True
         return False

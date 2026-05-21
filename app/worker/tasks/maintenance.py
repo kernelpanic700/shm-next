@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from taskiq import TaskiqDepends
 
@@ -35,7 +35,7 @@ async def cleanup_expired_sessions(
 ) -> dict:
     """Очистить просроченные сессии."""
     async with uow:
-        cutoff = datetime.utcnow() - timedelta(days=older_than_days)
+        cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
         deleted = await uow.sessions.delete_expired(cutoff)
         await uow.commit()
         return {"status": "success", "deleted": deleted}
