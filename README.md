@@ -1,106 +1,82 @@
-# shm-next — Universal Billing System
+# SHM Next — Современная биллинговая система
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](https://github.com/kernelpanic700/shm-next/pkgs/container/shm-next)
-[![Tests](https://img.shields.io/badge/tests-455+-green?logo=pytest)](https://github.com/kernelpanic700/shm-next/actions)
-[![Release](https://img.shields.io/badge/release-v0.1.0-blue?logo=github)](https://github.com/kernelpanic700/shm-next/releases)
+**Современная система управления абонентами и биллингом** для интернет-провайдеров и телеком-компаний.
 
-Современная система биллинга на Python с архитектурой Clean Architecture.
+![Python](https://img.shields.io/badge/Python-3.12-3776AB)
+![Next.js](https://img.shields.io/badge/Next.js-14-000000)
+![Litestar](https://img.shields.io/badge/Litestar-3.0-FF6B6B)
+![Docker](https://img.shields.io/badge/Docker-2496ED)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 📋 Содержание
+## ✨ Основные возможности
 
-- [Быстрый старт](#-быстрый-старт)
-- [Архитектура](#-архитектура)
-- [Установка](#-установка)
-- [Конфигурация](#-конфигурация)
-- [Запуск](#-запуск)
-- [API](#-api)
-- [Разработка](#-разработка)
-- [Тестирование](#-тестирование)
-- [Деплой](#-деплой)
+- Чистая **DDD-архитектура** (Domain-Driven Design)
+- Высокопроизводительный **Async API** на Litestar
+- Надёжный **Worker** на Taskiq + Spool-система с retry и backoff
+- Современный **Admin Panel** на Next.js 14 + TypeScript
+- Уведомления (Email, SMS, Push, Webhooks)
+- PostgreSQL + Redis
 
 ## 🚀 Быстрый старт
 
+### Docker (рекомендуется)
+
 ```bash
-# 1. Клонирование и настройка
 git clone https://github.com/kernelpanic700/shm-next.git
 cd shm-next
-
-# 2. Установка зависимостей
-pip install -e ".[dev]"
-
-# 3. Настройка окружения
-cp .env.example .env
-# Отредактировать .env под свои нужды
-
-# 4. Запуск тестов
-pytest tests/ -v
-
-# 5. Запуск API сервера
-uvicorn app.api.app:app --reload
+docker compose --profile dev up -d
 ```
 
-## 🎨 Admin Panel
+**Доступ:**
+- API: http://localhost:8000
+- Admin Panel: http://localhost:3000
 
-Современный веб-интерфейс на Next.js 14 (App Router) для управления системой.
-
-### Страницы
-
-| Страница | Описание |
-|----------|----------|
-| `/abonents` | Управление абонентами (поиск, фильтры, действия) |
-| `/abonents/[id]` | Детальная карточка абонента с историей |
-| `/tariffs` | Список тарифов |
-| `/services` | Управление услугами |
-| `/payments` | Мониторинг платежей |
-| `/spool` | Очередь задач (SPOOL) |
-| `/reports` | Аналитика и отчёты |
-
-### Запуск Admin Panel
+### Локальный запуск
 
 ```bash
+# Backend
+pip install -e ".[dev]"
+cp .env.example .env
+uvicorn app.api.app:app --reload --port 8000
+
+# Admin Panel (в новом терминале)
 cd admin
 npm install
-npm run dev      # http://localhost:3000
-npm run build    # Production сборка
+npm run dev
 ```
 
-### Технологии
+## 📸 Скриншоты
 
-- **Next.js 14.2** + App Router
-- **TypeScript** + TanStack Query v5
-- **TanStack Table v8** + Radix UI
-- **Recharts** для графиков
-- **Tailwind CSS**
+(Добавьте скриншоты в папку docs/screenshots/ после деплоя)
 
 ## 🏗️ Архитектура
 
 ```
 shm-next/
-├── app/                    # Основной код
-│   ├── api/               # API слой (Litestar)
-│   ├── core/              # Доменный слой
-│   ├── infrastructure/    # Инфраструктурный слой
-│   └── worker/            # Фоновые задачи (Taskiq)
-├── admin/                 # Admin Panel (Next.js)
-├── tests/                 # Тесты
-└── docker-compose.yml     # Docker оркестрация
+├── app/                    # Backend (Litestar + DDD)
+├── admin/                  # Admin Panel (Next.js 14)
+├── app/worker/             # Фоновые задачи (Taskiq)
+├── tests/                  # Тесты
+├── alembic/                # Миграции БД
+└── docker-compose.yml
 ```
 
-## 🧪 Тестирование
+## 📦 Технологии
 
-```bash
-# Все тесты
-pytest tests/ -v
+- **Backend:** Python 3.12, Litestar, SQLAlchemy 2.0, Taskiq
+- **Frontend:** Next.js 14, TypeScript, TanStack Query, Tailwind, shadcn/ui
+- **БД:** PostgreSQL + Redis
 
-# С покрытием
-pytest tests/ --cov=app --cov-report=html
-```
+## 📄 Лицензия
 
-## 🚢 Деплой
+Проект распространяется под лицензией MIT — см. файл LICENSE.
 
-```bash
-cp .env.example .env
-docker compose --profile prod up -d
-```
+## 🤝 Contributing
+
+Pull Request'ы приветствуются!
+
+## 🗺️ Roadmap
+
+- **v0.2.0** — Улучшение Admin Panel + Rate Limiting
+- **v0.3.0** — Security hardening + Performance
+- **v1.0.0** — Multi-tenancy, расширенная аналитика, GraphQL
