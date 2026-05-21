@@ -2,6 +2,9 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](https://github.com/ghimmeli/shm-next/pkgs/container/shm-next)
+[![Tests](https://img.shields.io/badge/tests-455+-green?logo=pytest)](https://github.com/ghimmeli/shm-next/actions)
+[![Release](https://img.shields.io/badge/release-v0.1.0-blue?logo=github)](https://github.com/ghimmeli/shm-next/releases)
 
 Современная система биллинга на Python с архитектурой Clean Architecture.
 
