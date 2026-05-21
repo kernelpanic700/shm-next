@@ -12,8 +12,8 @@
 
 - Чистая **DDD-архитектура** (Domain-Driven Design)
 - Высокопроизводительный **Async API** на Litestar
-- Мощный **Worker** (Taskiq) + Spool-система с retry
-- Современный **Admin Panel** на Next.js 14 + TypeScript
+- Надёжный **Worker** (Taskiq) + Spool-система с retry и backoff
+- Современный **Admin Panel** на Next.js 14 + TypeScript + Recharts
 - Уведомления (Email, SMS, Push, Webhooks)
 - PostgreSQL + Redis
 
@@ -27,9 +27,9 @@ cd shm-next
 docker compose --profile dev up -d
 ```
 
-**Доступ:**
-- API: http://localhost:8000
-- Admin Panel: http://localhost:3000
+Доступ:
+- **API**: http://localhost:8000
+- **Admin Panel**: http://localhost:3000
 
 ### Локальный запуск
 
@@ -47,23 +47,30 @@ npm run dev
 
 ## 📸 Скриншоты
 
-*Скриншоты будут добавлены после деплоя*
+*Скриншоты интерфейса будут добавлены в ближайшее время*
 
 ## 🏗️ Архитектура
 
 ```
 shm-next/
-├── app/        — Backend (Litestar + DDD)
-├── admin/      — Admin Panel (Next.js)
-└── app/worker/ — Фоновые задачи
+├── app/                    # Backend (Litestar + DDD)
+├── admin/                  # Admin Panel (Next.js 14)
+├── app/worker/             # Фоновые задачи (Taskiq)
+├── tests/                  # Тесты
+├── alembic/                # Миграции БД
+└── docker-compose.yml
 ```
 
 ## 📄 Лицензия
 
-Проект распространяется под лицензией MIT — см. [LICENSE](LICENSE).
+Проект распространяется под лицензией MIT — см. файл [LICENSE](LICENSE).
+
+## 🤝 Contributing
+
+Pull Request'ы приветствуются! Пожалуйста, ознакомьтесь с [CONTRIBUTING.md](CONTRIBUTING.md) для деталей.
 
 ## 🗺️ Roadmap
 
 - **v0.2.0** — Улучшения Admin Panel + Rate Limiting
-- **v0.3.0** — Security + Performance
-- **v1.0.0** — Multi-tenancy и расширенная аналитика
+- **v0.3.0** — Security hardening + Performance
+- **v1.0.0** — Multi-tenancy, расширенная аналитика, GraphQL
