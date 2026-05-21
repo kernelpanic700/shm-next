@@ -1,0 +1,13 @@
+# Repository Configuration
+# This file documents the repository metadata for SHM Next
+
+description: "Современная биллинговая система для интернет-провайдеров и телеком-компаний на Python + Next.js"
+topics:
+  - billing
+  - isp
+  - ddd
+  - python
+  - nextjs
+  - litestar
+  - taskiq
+  - admin-panel
