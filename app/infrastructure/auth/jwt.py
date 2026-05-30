@@ -94,6 +94,7 @@ class JWTManager:
         self,
         subject: str,
         session_id: str,
+        permissions: list[str] | None = None,
         expires_delta: timedelta | None = None,
     ) -> str:
         """
@@ -114,6 +115,7 @@ class JWTManager:
             sub=subject,
             type="refresh",
             session_id=session_id,
+            permissions=permissions or [],
             exp=(datetime.now(UTC) + expires_delta).timestamp(),
             iat=datetime.now(UTC).timestamp(),
         )

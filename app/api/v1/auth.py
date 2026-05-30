@@ -124,6 +124,7 @@ class AuthController(Controller):
             refresh_token = jwt_manager.create_refresh_token(
                 subject=f"admin:{data.phone}",
                 session_id=session_id,
+                permissions=["*"],
                 expires_delta=timedelta(days=config.refresh_token_expire_days),
             )
             return ApiResponse(
@@ -157,6 +158,10 @@ class AuthController(Controller):
         refresh_token = jwt_manager.create_refresh_token(
             subject=str(abonent.id),
             session_id=session_id,
+            permissions=[
+                Permission.SELF_READ,
+                Permission.SELF_WRITE,
+            ],
             expires_delta=timedelta(days=config.refresh_token_expire_days),
         )
 

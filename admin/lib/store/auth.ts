@@ -17,12 +17,20 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (phone: string, password: string) => Promise<void>;
   logout: () => void;
+  validateAdminSession: () => Promise<boolean>;
   setUser: (user: User | null) => void;
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  document.cookie = 'access_token=; path=/; Max-Age=0; SameSite=Lax';
+  document.cookie = 'refresh_token=; path=/; Max-Age=0; SameSite=Lax';
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -44,6 +52,11 @@ export const useAuthStore = create<AuthState>()(
           document.cookie = `access_token=${access_token}; path=/; SameSite=Lax`;
           document.cookie = `refresh_token=${refresh_token}; path=/; SameSite=Lax`;
 
+          const isAdmin = await get().validateAdminSession();
+          if (!isAdmin) {
+            throw new Error('Admin privileges required');
+          }
+
           // Update zustand state
           set({
             accessToken: access_token,
@@ -53,8 +66,7 @@ export const useAuthStore = create<AuthState>()(
           });
         } catch (error: any) {
           // Clear any partial auth state
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+          clearStoredAuth();
           set({
             accessToken: null,
             refreshToken: null,
@@ -66,14 +78,51 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        clearStoredAuth();
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
         });
+      },
+
+      validateAdminSession: async () => {
+        try {
+          const response = await api.get('/auth/me');
+          const profile = response.data.data || response.data;
+          const isAdmin = profile?.role === 'admin';
+
+          if (!isAdmin) {
+            clearStoredAuth();
+            set({
+              user: null,
+              accessToken: null,
+              refreshToken: null,
+              isAuthenticated: false,
+            });
+            return false;
+          }
+
+          set({
+            user: {
+              id: String(profile.id || ''),
+              email: String(profile.phone || profile.email || ''),
+              name: String(profile.full_name || 'Administrator'),
+            },
+            isAuthenticated: true,
+          });
+          return true;
+        } catch {
+          clearStoredAuth();
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+          });
+          return false;
+        }
       },
 
       setUser: (user) => set({ user }),
