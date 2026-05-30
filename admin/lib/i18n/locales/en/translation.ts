@@ -100,6 +100,7 @@ const translations = {
   "TopUp": "Top up",
   "ToppingUp": "Topping up...",
   "TariffChanged": "Tariff changed",
+  "TariffsNotFound": "No active tariffs found. Create a tariff first.",
   "TariffChangeFailed": "Failed to change tariff",
   "SelectNewTariff": "Select a new tariff",
   "NewTariff": "New tariff",

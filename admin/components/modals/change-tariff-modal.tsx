@@ -29,8 +29,10 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
   const [selectedTariff, setSelectedTariff] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { data: tariffs = [] } = useTariffs();
+  const { data: tariffs = [], isLoading: isTariffsLoading } = useTariffs();
   const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
+  const activeTariffs = tariffs.filter((tariff) => tariff.is_active);
+  const selectedTariffInfo = activeTariffs.find((tariff) => tariff.id === selectedTariff);
 
   useEffect(() => {
     if (open) {
@@ -45,7 +47,11 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
     setIsSubmitting(true);
     try {
       await api.patch(`/abonents/${abonent.id}`, { tariff_id: selectedTariff });
-      toast.success(t('TariffChanged'));
+      toast.success(t('TariffChanged'), {
+        description: selectedTariffInfo
+          ? `${abonent.full_name || abonent.phone}: ${selectedTariffInfo.name}`
+          : abonent.full_name || abonent.phone,
+      });
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
@@ -78,19 +84,22 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
                 required
               >
                 <option value="">{t('SelectTariffPlaceholder')}</option>
-                {tariffs.filter(t => t.is_active).map((tariff) => (
+                {activeTariffs.map((tariff) => (
                   <option key={tariff.id} value={tariff.id}>
                     {tariff.name} - {tariff.price.toLocaleString(numberLocale)} {tariff.currency}
                   </option>
                 ))}
               </select>
+              {!isTariffsLoading && activeTariffs.length === 0 && (
+                <p className="text-sm text-destructive">{t('TariffsNotFound')}</p>
+              )}
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('Cancel')}
             </Button>
-            <Button type="submit" disabled={isSubmitting || !selectedTariff}>
+            <Button type="submit" disabled={isSubmitting || !selectedTariff || activeTariffs.length === 0}>
               {isSubmitting ? t('Saving') : t('ChangeTariff')}
             </Button>
           </DialogFooter>

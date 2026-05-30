@@ -6,14 +6,14 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, DollarSign, Edit, PowerOff, RefreshCw } from 'lucide-react';
+import { Plus, DollarSign, PowerOff, RefreshCw } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { useAbonents } from '@/lib/hooks/use-abonents';
 import { ColumnDef } from '@tanstack/react-table';
 import { Abonent } from '@/lib/api';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TopUpBalanceModal, CreateAbonentModal } from '@/components/modals';
+import { TopUpBalanceModal, CreateAbonentModal, ChangeTariffModal } from '@/components/modals';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useTranslation } from 'react-i18next';
 
@@ -23,6 +23,7 @@ export default function AbonentsPage() {
   const [minBalance, setMinBalance] = useState<string>('');
   const [maxBalance, setMaxBalance] = useState<string>('');
   const [topUpAbonent, setTopUpAbonent] = useState<Abonent | null>(null);
+  const [changeTariffAbonent, setChangeTariffAbonent] = useState<Abonent | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; abonent: Abonent | null }>({ open: false, abonent: null });
   
@@ -128,7 +129,7 @@ export default function AbonentsPage() {
   };
 
   const handleChangeTariff = (abonent: Abonent) => {
-    toast.info(t('TariffChange'), { description: `${abonent.full_name || abonent.phone}` });
+    setChangeTariffAbonent(abonent);
   };
 
   const handleDeactivate = (abonent: Abonent) => {
@@ -239,6 +240,12 @@ export default function AbonentsPage() {
         abonent={topUpAbonent}
         open={!!topUpAbonent}
         onOpenChange={(open) => !open && setTopUpAbonent(null)}
+        onSuccess={refetch}
+      />
+      <ChangeTariffModal
+        abonent={changeTariffAbonent}
+        open={!!changeTariffAbonent}
+        onOpenChange={(open) => !open && setChangeTariffAbonent(null)}
         onSuccess={refetch}
       />
       <CreateAbonentModal

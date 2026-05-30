@@ -100,6 +100,7 @@ const translations = {
   "TopUp": "Aufladen",
   "ToppingUp": "Wird aufgeladen...",
   "TariffChanged": "Tarif geändert",
+  "TariffsNotFound": "Keine aktiven Tarife gefunden. Erstellen Sie zuerst einen Tarif.",
   "TariffChangeFailed": "Tarif konnte nicht geändert werden",
   "SelectNewTariff": "Neuen Tarif auswählen",
   "NewTariff": "Neuer Tarif",

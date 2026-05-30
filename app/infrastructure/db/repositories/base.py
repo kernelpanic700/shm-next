@@ -64,6 +64,11 @@ class BaseRepository(Generic[T]):
             if conditions:
                 stmt = stmt.where(and_(*conditions))
 
+        if hasattr(self._model, "created_at"):
+            stmt = stmt.order_by(getattr(self._model, "created_at").desc(), getattr(self._model, "id"))
+        elif hasattr(self._model, "id"):
+            stmt = stmt.order_by(getattr(self._model, "id"))
+
         stmt = stmt.offset(offset).limit(limit)
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
