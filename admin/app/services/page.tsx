@@ -22,8 +22,32 @@ export default function ServicesPage() {
   const columns = useMemo<ColumnDef<Service>[]>(() => [
     { accessorKey: 'name', header: t('Name') },
     { accessorKey: 'description', header: t('Description'), cell: ({ row }) => <span className="text-muted-foreground">{row.getValue('description') || '-'}</span> },
-    { accessorKey: 'price', header: t('Price'), cell: ({ row }) => <span className="font-medium">{parseFloat(row.getValue('price') || '0').toLocaleString(numberLocale, { minimumFractionDigits: 2 })} {row.getValue('currency')}</span> },
-    { accessorKey: 'is_active', header: t('Status'), cell: ({ row }) => <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.getValue('is_active') ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{row.getValue('is_active') ? t('Active') : t('Inactive')}</span> },
+    {
+      accessorKey: 'cost',
+      header: t('Price'),
+      cell: ({ row }) => {
+        const service = row.original;
+        const amount = Number(service.cost ?? service.price ?? 0);
+        return (
+          <span className="font-medium">
+            {amount.toLocaleString(numberLocale, { minimumFractionDigits: 2 })} {service.currency}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'allow_to_order',
+      header: t('Status'),
+      cell: ({ row }) => {
+        const service = row.original;
+        const isActive = service.allow_to_order ?? service.is_active ?? !service.is_deleted;
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+            {isActive ? t('Active') : t('Inactive')}
+          </span>
+        );
+      },
+    },
     { id: 'actions', header: t('Actions'), cell: ({ row, table }) => (
       <div className="flex gap-1">
         <Button variant="ghost" size="sm" onClick={() => (table.options.meta as any)?.onEdit(row.original)} title={t('Edit')}><Edit className="h-4 w-4" /></Button>

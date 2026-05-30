@@ -30,7 +30,10 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: '',
+    cost: '',
+    currency: 'RUB',
+    period_cost: '1.0000',
+    category: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,13 +42,19 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
       setFormData({
         name: service.name || '',
         description: service.description || '',
-        price: service.price?.toString() || '',
+        cost: String(service.cost ?? service.price ?? ''),
+        currency: service.currency || 'RUB',
+        period_cost: service.period_cost || '1.0000',
+        category: service.category || '',
       });
     } else {
       setFormData({
         name: '',
         description: '',
-        price: '',
+        cost: '',
+        currency: 'RUB',
+        period_cost: '1.0000',
+        category: '',
       });
     }
   }, [service, open]);
@@ -53,13 +62,22 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const payload = {
+      name: formData.name,
+      description: formData.description || null,
+      cost: Number(formData.cost || 0),
+      currency: formData.currency || 'RUB',
+      period_cost: formData.period_cost || '1.0000',
+      category: formData.category || null,
+      allow_to_order: true,
+    };
 
     try {
       if (service) {
-        await api.patch(`/services/${service.id}`, formData);
+        await api.patch(`/catalog-services/${service.id}`, payload);
         toast.success(t('ServiceUpdated'));
       } else {
-        await api.post('/services', formData);
+        await api.post('/catalog-services', payload);
         toast.success(t('ServiceCreated'));
       }
       onSuccess?.();
@@ -104,16 +122,46 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">{t('Price')}</Label>
+              <Label htmlFor="cost">{t('Price')}</Label>
               <Input
-                id="price"
+                id="cost"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                value={formData.cost}
+                onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
                 required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="currency">{t('Currency')}</Label>
+                <Input
+                  id="currency"
+                  maxLength={3}
+                  value={formData.currency}
+                  onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase() })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="period_cost">{t('Period')}</Label>
+                <Input
+                  id="period_cost"
+                  value={formData.period_cost}
+                  onChange={(e) => setFormData({ ...formData, period_cost: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">{t('Category')}</Label>
+              <Input
+                id="category"
+                placeholder="base"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               />
             </div>
           </div>

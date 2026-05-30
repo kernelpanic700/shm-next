@@ -94,11 +94,27 @@ export interface Tariff {
 export interface Service {
   id: string;
   name: string;
-  description: string;
-  price: number;
+  description?: string | null;
+  price?: number;
+  cost?: number;
   currency: string;
-  is_active: boolean;
+  is_active?: boolean;
+  allow_to_order?: boolean;
+  is_deleted?: boolean;
+  period_cost?: string;
+  category?: string | null;
+  legacy_service_id?: number | null;
+  max_count?: number | null;
+  pay_always?: boolean;
+  no_discount?: boolean;
+  pay_in_credit?: boolean;
+  is_composite?: boolean;
   created_at: string;
+}
+
+export interface ServiceListResponse {
+  items: Service[];
+  total: number;
 }
 
 export interface Payment {
