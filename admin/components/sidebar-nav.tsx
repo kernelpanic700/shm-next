@@ -12,6 +12,7 @@ import {
   BarChart3,
   BadgePercent,
   Boxes,
+  Workflow,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -45,6 +46,11 @@ const navItems = [
     title: 'Finance',
     href: '/finance',
     icon: BadgePercent,
+  },
+  {
+    title: 'Automation',
+    href: '/automation',
+    icon: Workflow,
   },
   {
     title: 'Reports',

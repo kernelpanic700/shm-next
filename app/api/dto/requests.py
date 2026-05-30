@@ -199,6 +199,10 @@ class EventActionRuleCreateRequest(BaseModel):
     title: str | None = Field(default=None, max_length=128)
     service_type: str | None = Field(default=None, max_length=64)
     catalog_service_id: UUID | None = None
+    server_group_id: UUID | None = None
+    server_id: UUID | None = None
+    template_id: UUID | None = None
+    command: str | None = Field(default=None, max_length=8000)
     settings: dict | None = None
     priority: int = Field(default=50, ge=0, le=100)
     max_retries: int = Field(default=3, ge=1, le=10)
@@ -212,6 +216,10 @@ class EventActionRuleUpdateRequest(BaseModel):
     title: str | None = Field(default=None, max_length=128)
     service_type: str | None = Field(default=None, max_length=64)
     catalog_service_id: UUID | None = None
+    server_group_id: UUID | None = None
+    server_id: UUID | None = None
+    template_id: UUID | None = None
+    command: str | None = Field(default=None, max_length=8000)
     settings: dict | None = None
     priority: int | None = Field(default=None, ge=0, le=100)
     max_retries: int | None = Field(default=None, ge=1, le=10)
@@ -313,6 +321,82 @@ class SpoolTaskCreate(BaseModel):
     execute_after: datetime | None = Field(
         None, description="Выполнить после (ISO 8601)"
     )
+
+
+# === Automation ===
+
+class SSHKeyCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    private_key: str = Field(..., min_length=1)
+    public_key: str | None = None
+    passphrase: str | None = None
+    fingerprint: str | None = None
+    is_active: bool = True
+
+
+class SSHKeyUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    private_key: str | None = Field(default=None, min_length=1)
+    public_key: str | None = None
+    passphrase: str | None = None
+    fingerprint: str | None = None
+    is_active: bool | None = None
+
+
+class ServerGroupCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    transport: str = Field(default="ssh", pattern="^(ssh|http|mail|telegram|local)$")
+    strategy: str = Field(default="round_robin", pattern="^(round_robin|first_active)$")
+    settings: dict | None = None
+    is_active: bool = True
+
+
+class ServerGroupUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    transport: str | None = Field(default=None, pattern="^(ssh|http|mail|telegram|local)$")
+    strategy: str | None = Field(default=None, pattern="^(round_robin|first_active)$")
+    settings: dict | None = None
+    is_active: bool | None = None
+
+
+class ServerCreateRequest(BaseModel):
+    group_id: UUID
+    name: str = Field(..., min_length=1, max_length=128)
+    host: str = Field(..., min_length=1, max_length=255)
+    port: int = Field(default=22, ge=1, le=65535)
+    key_id: UUID | None = None
+    proxy_jump: str | None = Field(default=None, max_length=255)
+    default_cmd: str | None = Field(default=None, max_length=8000)
+    settings: dict | None = None
+    is_active: bool = True
+
+
+class ServerUpdateRequest(BaseModel):
+    group_id: UUID | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    host: str | None = Field(default=None, min_length=1, max_length=255)
+    port: int | None = Field(default=None, ge=1, le=65535)
+    key_id: UUID | None = None
+    proxy_jump: str | None = Field(default=None, max_length=255)
+    default_cmd: str | None = Field(default=None, max_length=8000)
+    settings: dict | None = None
+    is_active: bool | None = None
+
+
+class CommandTemplateCreateRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    transport: str = Field(default="ssh", pattern="^(ssh|http|mail|telegram|local)$")
+    body: str = Field(..., min_length=1)
+    description: str | None = None
+    is_active: bool = True
+
+
+class CommandTemplateUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    transport: str | None = Field(default=None, pattern="^(ssh|http|mail|telegram|local)$")
+    body: str | None = Field(default=None, min_length=1)
+    description: str | None = None
+    is_active: bool | None = None
 
 
 # === Webhooks ===

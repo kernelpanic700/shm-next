@@ -3,10 +3,10 @@
 # =============================================================================
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.domain.repositories.spool import SpoolRepositoryProtocol
@@ -48,7 +48,12 @@ class SpoolTaskRepository(SpoolRepositoryProtocol):
     ) -> list:
         """Получить задачи, ожидающие выполнения."""
         stmt = select(SpoolTaskModel).where(
-            SpoolTaskModel.status.in_(["NEW", "PENDING", "FAILED"])
+            SpoolTaskModel.status.in_(["NEW", "PENDING", "FAILED", "RETRY"])
+        ).where(
+            or_(
+                SpoolTaskModel.execute_after.is_(None),
+                SpoolTaskModel.execute_after <= datetime.now(UTC),
+            )
         )
 
         if action_types:
@@ -81,18 +86,18 @@ class SpoolTaskRepository(SpoolRepositoryProtocol):
         """Получить задачу по ID."""
         return await self._session.get(SpoolTaskModel, task_id)
 
-    async def mark_processing(self, task_id: UUID, worker_id: str) -> bool:
+    async def mark_processing(self, task_id: UUID | int, worker_id: str) -> bool:
         """Отметить задачу как выполняемую."""
         task = await self._session.get(SpoolTaskModel, task_id)
 
-        if task and task.status in ("NEW", "PENDING", "FAILED"):
+        if task and task.status in ("NEW", "PENDING", "FAILED", "RETRY"):
             task.status = "PROCESSING"
             task.worker_id = worker_id
             await self._session.flush()
             return True
         return False
 
-    async def mark_completed(self, task_id: UUID, result: dict | None = None) -> bool:
+    async def mark_completed(self, task_id: UUID | int, result: dict | None = None) -> bool:
         """Отметить задачу как завершённую."""
         task = await self._session.get(SpoolTaskModel, task_id)
 
@@ -104,7 +109,11 @@ class SpoolTaskRepository(SpoolRepositoryProtocol):
         return False
 
     async def mark_failed(
-        self, task_id: UUID, error: str, retry_count: int
+        self,
+        task_id: UUID | int,
+        error: str,
+        retry_count: int,
+        execute_after: datetime | None = None,
     ) -> bool:
         """Отметить задачу как неудачную."""
         task = await self._session.get(SpoolTaskModel, task_id)
@@ -116,7 +125,8 @@ class SpoolTaskRepository(SpoolRepositoryProtocol):
             if retry_count >= task.max_retries:
                 task.status = "STUCK"
             else:
-                task.status = "FAILED"
+                task.status = "RETRY"
+                task.execute_after = execute_after
 
             await self._session.flush()
             return True

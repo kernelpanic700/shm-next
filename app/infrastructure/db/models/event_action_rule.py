@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import JSON, BigInteger, Boolean, Index, Integer, String
+from sqlalchemy import JSON, BigInteger, Boolean, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,6 +26,10 @@ class EventActionRuleModel(Base):
     title: Mapped[str] = mapped_column(String(128), nullable=False)
     service_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     catalog_service_id: Mapped[Any | None] = mapped_column(PG_UUID(as_uuid=True))
+    server_group_id: Mapped[Any | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("server_groups.id"), nullable=True)
+    server_id: Mapped[Any | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("servers.id"), nullable=True)
+    template_id: Mapped[Any | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("command_templates.id"), nullable=True)
+    command: Mapped[str | None] = mapped_column(Text, nullable=True)
     settings: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     priority: Mapped[int] = mapped_column(Integer, nullable=False, server_default="50")
     max_retries: Mapped[int] = mapped_column(Integer, nullable=False, server_default="3")
@@ -40,4 +44,5 @@ class EventActionRuleModel(Base):
         Index("idx_event_action_rules_event", "event_type", "is_enabled"),
         Index("idx_event_action_rules_service_type", "service_type"),
         Index("idx_event_action_rules_catalog", "catalog_service_id"),
+        Index("idx_event_action_rules_server_group", "server_group_id"),
     )

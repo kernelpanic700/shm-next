@@ -12,6 +12,7 @@ from app.infrastructure.db.models.audit_log import AuditLogModel
 from app.infrastructure.db.models.base import Base
 from app.infrastructure.db.models.bonus_entry import BonusEntryModel
 from app.infrastructure.db.models.catalog_service import CatalogServiceModel
+from app.infrastructure.db.models.automation import CommandTemplateModel, ServerGroupModel, ServerModel, SSHKeyModel
 from app.infrastructure.db.models.discount import DiscountModel
 from app.infrastructure.db.models.event_action_rule import EventActionRuleModel
 from app.infrastructure.db.models.invoice import InvoiceModel
@@ -30,13 +31,17 @@ __all__ = [
     "Base",
     "BonusEntryModel",
     "CatalogServiceModel",
+    "CommandTemplateModel",
     "DiscountModel",
     "EventActionRuleModel",
     "InvoiceModel",
     "NotificationModel",
     "PaymentModel",
     "ServiceModel",
+    "ServerGroupModel",
+    "ServerModel",
     "SessionModel",
+    "SSHKeyModel",
     "SpoolTaskModel",
     "TariffModel",
     "TariffServiceModel",

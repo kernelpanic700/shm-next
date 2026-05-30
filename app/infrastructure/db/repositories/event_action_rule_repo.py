@@ -81,6 +81,10 @@ class EventActionRuleRepository(EventActionRuleRepositoryProtocol):
         model.title = rule.title
         model.service_type = rule.service_type
         model.catalog_service_id = rule.catalog_service_id
+        model.server_group_id = rule.server_group_id
+        model.server_id = rule.server_id
+        model.template_id = rule.template_id
+        model.command = rule.command
         model.settings = rule.settings or None
         model.priority = rule.priority
         model.max_retries = rule.max_retries
@@ -99,6 +103,10 @@ class EventActionRuleRepository(EventActionRuleRepositoryProtocol):
             title=model.title,
             service_type=model.service_type,
             catalog_service_id=model.catalog_service_id,
+            server_group_id=model.server_group_id,
+            server_id=model.server_id,
+            template_id=model.template_id,
+            command=model.command,
             settings=model.settings,
             priority=model.priority,
             max_retries=model.max_retries,

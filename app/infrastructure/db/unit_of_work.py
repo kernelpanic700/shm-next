@@ -20,6 +20,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.repositories.abonent_repo import AbonentRepository
 from app.infrastructure.db.repositories.audit_log_repo import AuditLogRepository
+from app.infrastructure.db.repositories.automation_repo import (
+    CommandTemplateRepository,
+    ServerGroupRepository,
+    ServerRepository,
+    SSHKeyRepository,
+)
 from app.infrastructure.db.repositories.billing_repo import BillingRepository
 from app.infrastructure.db.repositories.bonus_entry_repo import BonusEntryRepository
 from app.infrastructure.db.repositories.catalog_service_repo import CatalogServiceRepository
@@ -64,6 +70,10 @@ class UnitOfWork:
         self._audit_log_repo: AuditLogRepository | None = None
         self._catalog_service_repo: CatalogServiceRepository | None = None
         self._event_action_rule_repo: EventActionRuleRepository | None = None
+        self._ssh_key_repo: SSHKeyRepository | None = None
+        self._server_group_repo: ServerGroupRepository | None = None
+        self._server_repo: ServerRepository | None = None
+        self._command_template_repo: CommandTemplateRepository | None = None
 
     @property
     def abonents(self) -> AbonentRepository:
@@ -166,6 +176,30 @@ class UnitOfWork:
         if self._event_action_rule_repo is None:
             self._event_action_rule_repo = EventActionRuleRepository(self._session)
         return self._event_action_rule_repo
+
+    @property
+    def ssh_keys(self) -> SSHKeyRepository:
+        if self._ssh_key_repo is None:
+            self._ssh_key_repo = SSHKeyRepository(self._session)
+        return self._ssh_key_repo
+
+    @property
+    def server_groups(self) -> ServerGroupRepository:
+        if self._server_group_repo is None:
+            self._server_group_repo = ServerGroupRepository(self._session)
+        return self._server_group_repo
+
+    @property
+    def servers(self) -> ServerRepository:
+        if self._server_repo is None:
+            self._server_repo = ServerRepository(self._session)
+        return self._server_repo
+
+    @property
+    def command_templates(self) -> CommandTemplateRepository:
+        if self._command_template_repo is None:
+            self._command_template_repo = CommandTemplateRepository(self._session)
+        return self._command_template_repo
 
     async def commit(self) -> None:
         """Фиксация всех изменений."""

@@ -316,6 +316,10 @@ class EventActionRuleResponse(BaseModel):
     title: str
     service_type: str | None = None
     catalog_service_id: UUID | None = None
+    server_group_id: UUID | None = None
+    server_id: UUID | None = None
+    template_id: UUID | None = None
+    command: str | None = None
     settings: dict
     priority: int
     max_retries: int
@@ -338,6 +342,10 @@ class EventActionRuleResponse(BaseModel):
                 "title": data.title,
                 "service_type": data.service_type,
                 "catalog_service_id": data.catalog_service_id,
+                "server_group_id": data.server_group_id,
+                "server_id": data.server_id,
+                "template_id": data.template_id,
+                "command": data.command,
                 "settings": data.settings,
                 "priority": data.priority,
                 "max_retries": data.max_retries,
@@ -351,6 +359,58 @@ class EventActionRuleResponse(BaseModel):
 class EventActionRuleListResponse(BaseModel):
     """Список правил действий по событиям."""
     items: list[EventActionRuleResponse]
+    total: int
+
+
+class SSHKeyResponse(BaseModel):
+    id: UUID
+    name: str
+    public_key: str | None = None
+    fingerprint: str | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class ServerGroupResponse(BaseModel):
+    id: UUID
+    name: str
+    transport: str
+    strategy: str
+    settings: dict | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class ServerResponse(BaseModel):
+    id: UUID
+    group_id: UUID
+    name: str
+    host: str
+    port: int
+    key_id: UUID | None = None
+    proxy_jump: str | None = None
+    default_cmd: str | None = None
+    settings: dict | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class CommandTemplateResponse(BaseModel):
+    id: UUID
+    name: str
+    transport: str
+    body: str
+    description: str | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class AutomationListResponse(BaseModel):
+    items: list[dict]
     total: int
 
 

@@ -48,7 +48,24 @@ class ServiceEventSpoolHandler:
 
         task_ids: list[int] = []
         for rule in rules:
-            payload = self._build_payload(event, rule.settings)
+            settings = {
+                **rule.settings,
+                "rule_id": str(rule.id),
+            }
+            if rule.server_group_id:
+                settings["server_group_id"] = str(rule.server_group_id)
+            if rule.server_id:
+                settings["server_id"] = str(rule.server_id)
+            if rule.template_id:
+                settings["template_id"] = str(rule.template_id)
+            if rule.command:
+                settings["command"] = rule.command
+
+            payload = self._build_payload(
+                event,
+                settings,
+                rule.settings,
+            )
             task_id = await self._spool_repo.create_task(
                 action_type=rule.action_type,
                 payload=payload,
@@ -58,9 +75,18 @@ class ServiceEventSpoolHandler:
             task_ids.append(int(task_id))
         return task_ids
 
-    def _build_payload(self, event: DomainEvent, settings: dict) -> dict[str, Any]:
+    def _build_payload(
+        self,
+        event: DomainEvent,
+        settings: dict,
+        legacy_settings: dict | None = None,
+    ) -> dict[str, Any]:
         expires_at = getattr(event, "expires_at", None)
         payload = {
+            "settings": legacy_settings if legacy_settings is not None else settings,
+            "rule": {
+                "settings": settings,
+            },
             "event": {
                 "id": event.event_id,
                 "type": event.event_type.value,
@@ -73,7 +99,6 @@ class ServiceEventSpoolHandler:
             "catalog_service_id": getattr(event, "catalog_service_id", None),
             "expires_at": expires_at.isoformat() if expires_at else None,
             "reason": getattr(event, "reason", None),
-            "settings": settings,
         }
         payload.update(getattr(event, "payload", {}) or {})
         return payload

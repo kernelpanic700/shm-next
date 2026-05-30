@@ -144,6 +144,82 @@ export interface SpoolTask {
   error_message: string | null;
 }
 
+export interface AutomationListResponse<T> {
+  items: T[];
+  total: number;
+}
+
+export interface SSHKey {
+  id: string;
+  name: string;
+  public_key?: string | null;
+  fingerprint?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServerGroup {
+  id: string;
+  name: string;
+  transport: string;
+  strategy: string;
+  settings?: Record<string, unknown> | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ManagedServer {
+  id: string;
+  group_id: string;
+  name: string;
+  host: string;
+  port: number;
+  key_id?: string | null;
+  proxy_jump?: string | null;
+  default_cmd?: string | null;
+  settings?: Record<string, unknown> | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommandTemplate {
+  id: string;
+  name: string;
+  transport: string;
+  body: string;
+  description?: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventActionRule {
+  id: string;
+  event_type: string;
+  action_type: string;
+  title: string;
+  service_type?: string | null;
+  catalog_service_id?: string | null;
+  server_group_id?: string | null;
+  server_id?: string | null;
+  template_id?: string | null;
+  command?: string | null;
+  settings: Record<string, unknown>;
+  priority: number;
+  max_retries: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventActionRuleListResponse {
+  items: EventActionRule[];
+  total: number;
+}
+
 export interface BillingCycle {
   id: string;
   period: string;

@@ -7,11 +7,10 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
 
 from app.infrastructure.db.unit_of_work import UnitOfWork
 from app.infrastructure.external.action_executor import ActionExecutor
-from app.infrastructure.external.action_registry import ActionRegistry
+from app.infrastructure.external.default_actions import create_default_action_registry
 from app.worker.brokers import broker
 
 
@@ -22,68 +21,70 @@ def _calculate_execute_after(retry_count: int) -> datetime:
 
 
 async def process_spool_task(
-    spool_task_id: UUID,
+    spool_task_id: int,
     uow: UnitOfWork | None = None,
 ) -> dict:
     """Обработать SpoolTask с полной логикой статусов и retry."""
     if uow is None:
         uow = UnitOfWork()
-    registry = ActionRegistry()
-    executor = ActionExecutor(registry=registry, uow=uow)
+    executor = ActionExecutor(registry=create_default_action_registry(uow))
 
     async with uow:
-        task = await uow.spool.get(spool_task_id)
+        task = await uow.spool.get_by_id(spool_task_id)
         if not task:
             return {"status": "error", "message": f"Task {spool_task_id} not found"}
 
         # Проверка статуса и времени выполнения
-        if task.status != "NEW":
-            if task.execute_after and task.execute_after > datetime.now(UTC):
-                return {"status": "skipped", "message": "Not scheduled yet"}
-            if task.status == "COMPLETED":
-                return {"status": "skipped", "message": "Already completed"}
-            if task.status == "FAILED":
-                return {"status": "skipped", "message": "Already failed"}
+        if task.execute_after and task.execute_after > datetime.now(UTC):
+            return {"status": "skipped", "message": "Not scheduled yet"}
+        if task.status in ("SUCCESS", "COMPLETED"):
+            return {"status": "skipped", "message": "Already completed"}
+        if task.status == "STUCK":
+            return {"status": "skipped", "message": "Already stuck"}
+        if task.status not in ("NEW", "PENDING", "FAILED", "RETRY"):
+            return {"status": "skipped", "message": f"Unsupported status {task.status}"}
 
         # Пометить PROCESSING
-        task.status = "PROCESSING"
-        task.worker_id = asyncio.current_task().get_name()
-        task.started_at = datetime.now(UTC)
-        await uow.spool.save(task)
+        worker_id = asyncio.current_task().get_name() if asyncio.current_task() else "spool-worker"
+        await uow.spool.mark_processing(spool_task_id, worker_id)
+        action_type = task.action_type
+        payload = task.payload or {}
+        retry_count = task.retry_count
         await uow.commit()
 
     # Выполнение вне транзакции
     try:
-        result = await executor.execute(task.action_type, task.payload)
+        result = await executor.execute(action_type, **payload)
+        if not result.success:
+            raise RuntimeError(result.error or "Action execution failed")
 
         async with uow:
-            task.status = "COMPLETED"
-            task.completed_at = datetime.now(UTC)
-            task.result = result
-            await uow.spool.save(task)
+            await uow.spool.mark_completed(
+                spool_task_id,
+                {
+                    "result": result.result,
+                    "attempts": result.attempts,
+                    "duration_ms": result.duration_ms,
+                },
+            )
             await uow.commit()
 
-        return {"status": "success", "result": result}
+        return {"status": "success", "result": result.result}
 
     except Exception as e:
         async with uow:
-            task.retry_count += 1
-
-            if task.retry_count >= task.max_retries:
-                task.status = "FAILED"
-                task.failed_at = datetime.now(UTC)
-                task.error_message = str(e)
-            else:
-                task.status = "RETRY"
-                task.execute_after = _calculate_execute_after(task.retry_count)
-                task.error_message = str(e)
-
-            await uow.spool.save(task)
+            next_retry_count = retry_count + 1
+            await uow.spool.mark_failed(
+                spool_task_id,
+                str(e),
+                next_retry_count,
+                execute_after=_calculate_execute_after(next_retry_count),
+            )
             await uow.commit()
 
         return {
-            "status": "error" if task.status == "FAILED" else "retry",
-            "retry_count": task.retry_count,
+            "status": "error",
+            "retry_count": next_retry_count,
             "error": str(e),
         }
 

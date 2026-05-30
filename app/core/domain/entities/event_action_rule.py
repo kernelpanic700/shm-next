@@ -23,6 +23,10 @@ class EventActionRule:
         title: str | None = None,
         service_type: str | None = None,
         catalog_service_id: UUID | None = None,
+        server_group_id: UUID | None = None,
+        server_id: UUID | None = None,
+        template_id: UUID | None = None,
+        command: str | None = None,
         settings: dict | None = None,
         priority: int = 50,
         max_retries: int = 3,
@@ -37,6 +41,10 @@ class EventActionRule:
         self._title = title or action_type
         self._service_type = service_type
         self._catalog_service_id = catalog_service_id
+        self._server_group_id = server_group_id
+        self._server_id = server_id
+        self._template_id = template_id
+        self._command = command
         self._settings = settings or {}
         self._priority = priority
         self._max_retries = max_retries
@@ -69,6 +77,22 @@ class EventActionRule:
     @property
     def catalog_service_id(self) -> UUID | None:
         return self._catalog_service_id
+
+    @property
+    def server_group_id(self) -> UUID | None:
+        return self._server_group_id
+
+    @property
+    def server_id(self) -> UUID | None:
+        return self._server_id
+
+    @property
+    def template_id(self) -> UUID | None:
+        return self._template_id
+
+    @property
+    def command(self) -> str | None:
+        return self._command
 
     @property
     def settings(self) -> dict:
