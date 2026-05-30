@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
 from app.core.domain.entities.bonus_entry import BonusEntry
@@ -22,6 +23,15 @@ class BonusEntryRepositoryProtocol(ABC):
     @abstractmethod
     async def get_by_abonent(self, abonent_id: UUID) -> list[BonusEntry]:
         """Получить бонусные записи абонента."""
+        ...
+
+    @abstractmethod
+    async def get_usable_by_abonent(
+        self,
+        abonent_id: UUID,
+        at: datetime,
+    ) -> list[BonusEntry]:
+        """Получить активные неистёкшие бонусы абонента."""
         ...
 
     @abstractmethod

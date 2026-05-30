@@ -159,4 +159,8 @@ class JWTManager:
             token,
             self._config.secret_key,
             algorithms=[self._config.algorithm],
+            issuer="shm-next",
+            options={
+                "require": ["exp", "iat", "iss", "sub", "type", "session_id"],
+            },
         )

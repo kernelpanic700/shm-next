@@ -12,7 +12,12 @@ from litestar import Router
 from app.api.v1.abonents import AbonentController
 from app.api.v1.auth import AuthController
 from app.api.v1.billing import BillingController
+from app.api.v1.bonus_entries import BonusEntryController
+from app.api.v1.catalog_services import CatalogServiceController
 from app.api.v1.config import ConfigController
+from app.api.v1.discounts import DiscountController
+from app.api.v1.dashboard import DashboardController
+from app.api.v1.event_action_rules import EventActionRuleController
 from app.api.v1.events import EventsController
 from app.api.v1.health import HealthController
 from app.api.v1.invoices import InvoiceController
@@ -36,7 +41,12 @@ def create_v1_router() -> Router:
             AbonentController,
             AuthController,
             BillingController,
+            BonusEntryController,
+            CatalogServiceController,
             ConfigController,
+            DiscountController,
+            DashboardController,
+            EventActionRuleController,
             EventsController,
             HealthController,
             InvoiceController,

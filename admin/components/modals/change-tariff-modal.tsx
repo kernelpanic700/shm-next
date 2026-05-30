@@ -15,6 +15,7 @@ import { Abonent, Tariff } from '@/lib/api';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useTariffs } from '@/lib/hooks/use-tariffs';
+import { useTranslation } from 'react-i18next';
 
 interface ChangeTariffModalProps {
   abonent?: Abonent | null;
@@ -24,10 +25,12 @@ interface ChangeTariffModalProps {
 }
 
 export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: ChangeTariffModalProps) {
+  const { t, i18n } = useTranslation();
   const [selectedTariff, setSelectedTariff] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: tariffs = [] } = useTariffs();
+  const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
 
   useEffect(() => {
     if (open) {
@@ -42,12 +45,12 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
     setIsSubmitting(true);
     try {
       await api.patch(`/abonents/${abonent.id}`, { tariff_id: selectedTariff });
-      toast.success('Тариф изменён');
+      toast.success(t('TariffChanged'));
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error('Ошибка', {
-        description: error.response?.data?.detail || 'Не удалось изменить тариф',
+      toast.error(t('Error'), {
+        description: error.response?.data?.detail || t('TariffChangeFailed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -58,15 +61,15 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Смена тарифа</DialogTitle>
+          <DialogTitle>{t('ChangeTariff')}</DialogTitle>
           <DialogDescription>
-            {abonent?.name || abonent?.phone} • Выберите новый тариф
+            {abonent?.full_name || abonent?.phone} • {t('SelectNewTariff')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="tariff">Новый тариф</Label>
+              <Label htmlFor="tariff">{t('NewTariff')}</Label>
               <select
                 id="tariff"
                 value={selectedTariff}
@@ -74,10 +77,10 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 required
               >
-                <option value="">Выберите тариф...</option>
+                <option value="">{t('SelectTariffPlaceholder')}</option>
                 {tariffs.filter(t => t.is_active).map((tariff) => (
                   <option key={tariff.id} value={tariff.id}>
-                    {tariff.name} — {tariff.price.toLocaleString('ru-RU')} {tariff.currency}
+                    {tariff.name} - {tariff.price.toLocaleString(numberLocale)} {tariff.currency}
                   </option>
                 ))}
               </select>
@@ -85,10 +88,10 @@ export function ChangeTariffModal({ abonent, open, onOpenChange, onSuccess }: Ch
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Отмена
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting || !selectedTariff}>
-              {isSubmitting ? 'Сохраняем...' : 'Сменить тариф'}
+              {isSubmitting ? t('Saving') : t('ChangeTariff')}
             </Button>
           </DialogFooter>
         </form>

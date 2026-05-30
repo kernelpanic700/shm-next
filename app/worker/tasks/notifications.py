@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import structlog
-from taskiq import TaskiqDepends
 
 from app.infrastructure.db.unit_of_work import UnitOfWork
 from app.worker.brokers import broker
@@ -28,11 +27,14 @@ async def _send_notification_stub(notification) -> bool:
 
 async def send_pending_notifications(
     batch_size: int = 100,
-    uow: UnitOfWork = TaskiqDepends(UnitOfWork),
+    uow: UnitOfWork | None = None,
 ) -> dict:
-    """Отправить отложенные уведомления."""
+    """Отправить отложенные уведовления."""
+    if uow is None:
+        uow = UnitOfWork()
+
     async with uow:
-        notifications = await uow.notifications.get_pending(batch_size=batch_size)
+        notifications = await uow.notifications.get_pending(limit=batch_size)
 
         sent_count = 0
         failed_count = 0
@@ -55,4 +57,4 @@ async def send_pending_notifications(
 
 
 # Taskiq задача
-send_pending_notifications_task = broker.task(send_pending_notifications)
+send_pending_notifications_task = broker.task(send_pending_notifications, crontab="*/5 * * * *")  # Каждые 5 минут

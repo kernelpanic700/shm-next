@@ -9,6 +9,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from uuid import UUID
 
+from app.infrastructure.db.models import SpoolTaskModel
+
 
 class SpoolRepositoryProtocol(ABC):
     """Протокол репозитория задач (Spool)."""
@@ -32,6 +34,11 @@ class SpoolRepositoryProtocol(ABC):
         limit: int = 100,
     ) -> list:
         """Получить задачи, ожидающие выполнения."""
+        ...
+
+    @abstractmethod
+    async def get_by_id(self, task_id: int) -> SpoolTaskModel | None:
+        """Получить задачу по ID."""
         ...
 
     @abstractmethod

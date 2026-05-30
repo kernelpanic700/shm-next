@@ -131,13 +131,31 @@ class AbonentService:
         offset: int = 0,
         limit: int = 50,
         status: str | None = None,
+        tariff_id: UUID | None = None,
+        min_balance: float | None = None,
+        max_balance: float | None = None,
     ) -> list[Abonent]:
         """Список абонентов с пагинацией."""
-        return await self._abonent_repo.list(
+        abonents = await self._abonent_repo.list(
             offset=offset,
             limit=limit,
             status=status,
         )
+        if tariff_id is not None:
+            abonents = [abonent for abonent in abonents if abonent.tariff_id == tariff_id]
+        if min_balance is not None:
+            abonents = [
+                abonent
+                for abonent in abonents
+                if float(abonent.balance.amount) >= min_balance
+            ]
+        if max_balance is not None:
+            abonents = [
+                abonent
+                for abonent in abonents
+                if float(abonent.balance.amount) <= max_balance
+            ]
+        return abonents
 
     async def update_abonent(
         self,
@@ -217,6 +235,26 @@ class AbonentService:
             logger.info("Abonent deleted", abonent_id=abonent_id)
 
         return result
+
+    async def deactivate_abonent(self, abonent_id: UUID) -> Abonent | None:
+        """Мягко деактивировать абонента."""
+        abonent = await self._abonent_repo.get(abonent_id)
+        if abonent is None:
+            return None
+
+        abonent._status = AbonentStatus.INACTIVE
+        saved = await self._abonent_repo.save(abonent)
+
+        from app.core.domain.events.abonent_events import AbonentUpdatedEvent
+
+        event = AbonentUpdatedEvent(
+            abonent_id=str(saved.id),
+            changes={"status": AbonentStatus.INACTIVE.value},
+        )
+        await self._event_bus.publish(event)
+
+        logger.info("Abonent deactivated", abonent_id=saved.id)
+        return saved
 
     async def change_balance(
         self,

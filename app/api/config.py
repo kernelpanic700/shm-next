@@ -7,9 +7,9 @@
 Использует pydantic-settings для загрузки из переменных окружения.
 """
 
-from __future__ import annotations
+from typing import Any, Union
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,7 +20,35 @@ class BaseSettingsConfig(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        enable_decoding=False,
     )
+
+
+def parse_cors_origins(v: Union[str, list[str]]) -> list[str]:
+    """Parse CORS origins from string or list."""
+    if isinstance(v, str):
+        return [item.strip() for item in v.split(",") if item.strip()]
+    return v or []
+
+
+def parse_allowed_hosts(v: Union[str, list[str]]) -> list[str]:
+    """Parse allowed hosts from string or list."""
+    if isinstance(v, str):
+        return [item.strip() for item in v.split(",") if item.strip()]
+    return v or []
+
+
+def parse_bool_flag(v: Any) -> bool:
+    """Parse boolean-like environment values used by legacy deploy configs."""
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, str):
+        normalized = v.strip().lower()
+        if normalized in {"1", "true", "yes", "y", "on", "debug", "dev", "development"}:
+            return True
+        if normalized in {"0", "false", "no", "n", "off", "release", "prod", "production"}:
+            return False
+    return bool(v)
 
 
 class AppConfig(BaseSettingsConfig):
@@ -45,10 +73,28 @@ class AppConfig(BaseSettingsConfig):
     algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=30)
     refresh_token_expire_days: int = Field(default=7)
+    admin_phone: str = Field(default="")
+    admin_password: str = Field(default="")
+    admin_password_hash: str = Field(default="")
     cors_origins: list[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"]
+        default=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:8080"],
     )
     allowed_hosts: list[str] = Field(default=["*"])
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v: Union[str, list[str], None]) -> list[str]:
+        return parse_cors_origins(v)
+
+    @field_validator("allowed_hosts", mode="before")
+    @classmethod
+    def validate_allowed_hosts(cls, v: Union[str, list[str], None]) -> list[str]:
+        return parse_allowed_hosts(v)
+
+    @field_validator("debug", "reload", "db_echo", "smtp_use_tls", mode="before")
+    @classmethod
+    def validate_bool_flags(cls, v: Any) -> bool:
+        return parse_bool_flag(v)
 
     # === База данных ===
     database_url: str = Field(

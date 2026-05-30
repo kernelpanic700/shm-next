@@ -34,6 +34,7 @@ Thumbs.db
 # === Testing ===
 .pytest_cache/
 .coverage
+coverage.json
 htmlcov/
 .tox/
 .nox/
@@ -43,6 +44,9 @@ docker-compose.override.yml
 
 # === Node ===
 node_modules/
+.next/
+*/.next/
+*.tsbuildinfo
 
 # === Backup / Temp ===
 *.bak

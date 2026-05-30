@@ -40,6 +40,7 @@ class PaymentModel(Base):
     status: Mapped[str] = mapped_column(String(20), server_default="NEW")
     external_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     version: Mapped[int] = mapped_column(
         BigInteger, nullable=False, server_default="1"

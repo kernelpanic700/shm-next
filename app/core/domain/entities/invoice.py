@@ -113,14 +113,32 @@ class Invoice:
         self._updated_at = datetime.now(UTC)
         self._version += 1
 
+    def mark_sent(self) -> None:
+        """Отметить счёт как отправленный абоненту."""
+        self._status = InvoiceStatus.SENT
+        self._updated_at = datetime.now(UTC)
+        self._version += 1
+
     def mark_paid(self) -> None:
         """Отметить как оплаченный."""
         self._status = InvoiceStatus.PAID
         self._updated_at = datetime.now(UTC)
         self._version += 1
 
+    def mark_unpaid(self) -> None:
+        """Вернуть счёт в состояние выставленного после возврата оплаты."""
+        self._status = InvoiceStatus.ISSUED
+        self._updated_at = datetime.now(UTC)
+        self._version += 1
+
     def mark_overdue(self) -> None:
         """Отметить как просроченный."""
         self._status = InvoiceStatus.OVERDUE
+        self._updated_at = datetime.now(UTC)
+        self._version += 1
+
+    def cancel(self) -> None:
+        """Отменить счёт."""
+        self._status = InvoiceStatus.CANCELLED
         self._updated_at = datetime.now(UTC)
         self._version += 1

@@ -16,6 +16,7 @@ import { Abonent } from '@/lib/api';
 import { DollarSign, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface TopUpBalanceModalProps {
   abonent: Abonent | null;
@@ -24,26 +25,27 @@ interface TopUpBalanceModalProps {
   onSuccess?: () => void;
 }
 
-const paymentMethods = [
-  { value: 'CASH', label: 'Наличные', icon: Banknote },
-  { value: 'CARD', label: 'Банковская карта', icon: CreditCard },
-  { value: 'MOBILE', label: 'Мобильный платеж', icon: Smartphone },
-];
-
 export function TopUpBalanceModal({ abonent, open, onOpenChange, onSuccess }: TopUpBalanceModalProps) {
+  const { t, i18n } = useTranslation();
   const [amount, setAmount] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('CARD');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amountError, setAmountError] = useState<string>('');
+  const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
+  const paymentMethods = [
+    { value: 'CASH', label: t('PaymentMethodCash'), icon: Banknote },
+    { value: 'CARD', label: t('PaymentMethodCard'), icon: CreditCard },
+    { value: 'MOBILE', label: t('PaymentMethodMobile'), icon: Smartphone },
+  ];
 
   const validateAmount = (value: string): boolean => {
     const num = parseFloat(value);
     if (!value) {
-      setAmountError('Введите сумму');
+      setAmountError(t('EnterAmount'));
       return false;
     }
     if (isNaN(num) || num <= 0) {
-      setAmountError('Сумма должна быть больше 0');
+      setAmountError(t('AmountMustBePositive'));
       return false;
     }
     setAmountError('');
@@ -60,15 +62,18 @@ export function TopUpBalanceModal({ abonent, open, onOpenChange, onSuccess }: To
         amount: parseFloat(amount),
         payment_method: paymentMethod,
       });
-      toast.success('Баланс пополнен', {
-        description: `На счёт ${abonent.name || abonent.phone} зачислено ${parseFloat(amount).toLocaleString('ru-RU', { minimumFractionDigits: 2 })}`,
+      toast.success(t('BalanceToppedUp'), {
+        description: t('BalanceToppedUpDescription', {
+          name: abonent.full_name || abonent.phone,
+          amount: parseFloat(amount).toLocaleString(numberLocale, { minimumFractionDigits: 2 }),
+        }),
       });
       onSuccess?.();
       onOpenChange(false);
       setAmount('');
     } catch (error: any) {
-      toast.error('Ошибка пополнения', {
-        description: error.response?.data?.detail || 'Не удалось пополнить баланс',
+      toast.error(t('TopUpError'), {
+        description: error.response?.data?.detail || t('TopUpFailed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -79,15 +84,15 @@ export function TopUpBalanceModal({ abonent, open, onOpenChange, onSuccess }: To
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Пополнение баланса</DialogTitle>
+          <DialogTitle>{t('TopUpBalance')}</DialogTitle>
           <DialogDescription>
-            {abonent?.name || abonent?.phone} • Лицевой счёт: {abonent?.account_number}
+            {abonent?.full_name || abonent?.phone} • {t('AccountNumber')}: {abonent?.account_number}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Сумма пополнения</Label>
+              <Label htmlFor="amount">{t('TopUpAmount')}</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -106,7 +111,7 @@ export function TopUpBalanceModal({ abonent, open, onOpenChange, onSuccess }: To
               {amountError && <p className="text-sm text-destructive">{amountError}</p>}
             </div>
             <div className="space-y-2">
-              <Label>Способ оплаты</Label>
+              <Label>{t('PaymentMethod')}</Label>
               <div className="grid grid-cols-3 gap-2">
                 {paymentMethods.map((method) => {
                   const Icon = method.icon;
@@ -131,10 +136,10 @@ export function TopUpBalanceModal({ abonent, open, onOpenChange, onSuccess }: To
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Отмена
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting || !amount}>
-              {isSubmitting ? 'Пополняем...' : 'Пополнить'}
+              {isSubmitting ? t('ToppingUp') : t('TopUp')}
             </Button>
           </DialogFooter>
         </form>

@@ -5,18 +5,23 @@
 
 from __future__ import annotations
 
-from taskiq import TaskiqScheduler
-from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
+from taskiq import InMemoryBroker, TaskiqScheduler
 
 from app.api.config import AppConfig
 
 config = AppConfig()
 
-# Redis брокер
-broker = RedisStreamBroker(config.redis_url)
+try:
+    from taskiq_redis import RedisAsyncResultBackend, PubSubBroker
+except ModuleNotFoundError:
+    broker = InMemoryBroker()
+    result_backend = None
+else:
+    # Redis брокер
+    broker = PubSubBroker(config.redis_url)
 
-# Result backend
-result_backend = RedisAsyncResultBackend(config.redis_url)
+    # Result backend
+    result_backend = RedisAsyncResultBackend(config.redis_url)
 
 # Планировщик задач
 scheduler = TaskiqScheduler(

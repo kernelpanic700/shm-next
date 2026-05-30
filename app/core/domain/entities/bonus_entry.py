@@ -107,7 +107,12 @@ class BonusEntry:
         check_date = at or datetime.now(UTC)
         if self._expires_at is None:
             return False
-        return check_date > self._expires_at
+        expires_at = self._expires_at
+        if check_date.tzinfo is None:
+            check_date = check_date.replace(tzinfo=UTC)
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+        return check_date > expires_at
 
     def expire(self) -> None:
         """Принудительно деактивировать бонус."""
@@ -122,3 +127,22 @@ class BonusEntry:
         if self.is_expired(at):
             return False
         return True
+
+    def consume(self, amount: Money) -> Money:
+        """Списать часть бонуса и вернуть фактически использованную сумму."""
+        if self._amount is None:
+            return Money.zero(amount.currency.value)
+        if amount.currency != self._amount.currency:
+            raise ValueError("Bonus currency mismatch")
+        if amount.is_negative():
+            raise ValueError("Consumed bonus amount cannot be negative")
+        if amount.is_zero() or not self.can_use():
+            return Money.zero(amount.currency.value)
+
+        used = self._amount if self._amount <= amount else amount
+        self._amount = self._amount - used
+        if self._amount.is_zero():
+            self._is_active = False
+        self._updated_at = datetime.now(UTC)
+        self._version += 1
+        return used

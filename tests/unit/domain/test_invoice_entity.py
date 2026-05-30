@@ -39,15 +39,30 @@ class TestInvoice:
         invoice.issue()
         assert invoice.status == InvoiceStatus.ISSUED
 
+    def test_mark_sent(self):
+        invoice = Invoice(status=InvoiceStatus.ISSUED)
+        invoice.mark_sent()
+        assert invoice.status == InvoiceStatus.SENT
+
     def test_mark_paid(self):
         invoice = Invoice(status=InvoiceStatus.ISSUED)
         invoice.mark_paid()
         assert invoice.status == InvoiceStatus.PAID
 
+    def test_mark_unpaid(self):
+        invoice = Invoice(status=InvoiceStatus.PAID)
+        invoice.mark_unpaid()
+        assert invoice.status == InvoiceStatus.ISSUED
+
     def test_mark_overdue(self):
         invoice = Invoice(status=InvoiceStatus.ISSUED)
         invoice.mark_overdue()
         assert invoice.status == InvoiceStatus.OVERDUE
+
+    def test_cancel(self):
+        invoice = Invoice(status=InvoiceStatus.ISSUED)
+        invoice.cancel()
+        assert invoice.status == InvoiceStatus.CANCELLED
 
     def test_version_increment(self):
         invoice = Invoice(version=1)

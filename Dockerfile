@@ -28,6 +28,7 @@ COPY pyproject.toml ./
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN uv pip install .
+RUN uv pip install taskiq-redis psycopg2-binary
 
 # ============================================================
 # Stage 2: Runtime
@@ -61,7 +62,7 @@ WORKDIR /app
 # Копируем исходный код
 COPY app/ ./app/
 COPY alembic/ ./alembic/
-COPY worker/ ./worker/
+COPY alembic.ini ./alembic.ini
 
 # Владелец — non-root пользователь
 RUN chown -R appuser:appuser /app

@@ -77,6 +77,10 @@ class SpoolTaskRepository(SpoolRepositoryProtocol):
             for t in tasks
         ]
 
+    async def get_by_id(self, task_id: int) -> SpoolTaskModel | None:
+        """Получить задачу по ID."""
+        return await self._session.get(SpoolTaskModel, task_id)
+
     async def mark_processing(self, task_id: UUID, worker_id: str) -> bool:
         """Отметить задачу как выполняемую."""
         task = await self._session.get(SpoolTaskModel, task_id)

@@ -3,16 +3,15 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Calendar, Users, CreditCard, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { Download, Users, CreditCard, TrendingUp, DollarSign, Activity } from 'lucide-react';
 import { useAbonents } from '@/lib/hooks/use-abonents';
 import { useTariffs } from '@/lib/hooks/use-tariffs';
 import { usePayments } from '@/lib/hooks/use-payments';
 import { useSpoolTasks } from '@/lib/hooks/use-spool-tasks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { de, enUS, ru } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -28,21 +27,19 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-
-const periodOptions = [
-  { value: 'today', label: 'Сегодня' },
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-  { value: 'quarter', label: 'Квартал' },
-  { value: 'year', label: 'Год' },
-];
+import { Abonent, SpoolTask } from '@/lib/api';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
+const getDateLocale = (language: string) => {
+  if (language.startsWith('de')) return de;
+  if (language.startsWith('en')) return enUS;
+  return ru;
+};
+
 export default function ReportsPage() {
+  const { t, i18n } = useTranslation();
   const [period, setPeriod] = useState('month');
-  const [customDateFrom, setCustomDateFrom] = useState('');
-  const [customDateTo, setCustomDateTo] = useState('');
 
   const { data: abonents = [], isLoading: abonentsLoading } = useAbonents();
   const { data: tariffs = [], isLoading: tariffsLoading } = useTariffs();
@@ -50,14 +47,28 @@ export default function ReportsPage() {
   const { data: tasks = [], isLoading: tasksLoading } = useSpoolTasks();
 
   const isLoading = abonentsLoading || tariffsLoading || paymentsLoading || tasksLoading;
+  const dateLocale = getDateLocale(i18n.language);
+  const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
+  const periodOptions = useMemo(() => [
+    { value: 'today', label: t('Today') },
+    { value: 'week', label: t('Week') },
+    { value: 'month', label: t('Month') },
+    { value: 'quarter', label: t('Quarter') },
+    { value: 'year', label: t('Year') },
+  ], [t]);
+  const statusLabels = useMemo<Record<string, string>>(() => ({
+    ACTIVE: t('Active'),
+    INACTIVE: t('Inactive'),
+    BLOCKED: t('Blocked'),
+    SUSPENDED: t('Suspended'),
+  }), [t]);
 
-  // Метрики
   const metrics = useMemo(() => {
     const totalAbonents = abonents.length;
-    const activeAbonents = abonents.filter(a => a.status === 'ACTIVE' || a.status === 'active').length;
+    const activeAbonents = abonents.filter((a: Abonent) => a.status === 'ACTIVE' || a.status === 'active').length;
     const totalBalance = abonents.reduce((sum, a) => sum + parseFloat(String(a.balance || 0)), 0);
     const totalPayments = payments.reduce((sum, p) => sum + parseFloat(String(p.amount || 0)), 0);
-    const pendingTasks = tasks.filter(t => t.status === 'NEW' || t.status === 'PROCESSING').length;
+    const pendingTasks = tasks.filter((t: SpoolTask) => t.status === 'NEW' || t.status === 'PROCESSING').length;
     const arpu = totalAbonents > 0 ? totalPayments / totalAbonents : 0;
 
     return {
@@ -70,7 +81,6 @@ export default function ReportsPage() {
     };
   }, [abonents, payments, tasks]);
 
-  // Данные для графиков
   const dailyData = useMemo(() => {
     const days = 30;
     const data = [];
@@ -85,25 +95,23 @@ export default function ReportsPage() {
         : 0;
       
       data.push({
-        date: format(date, 'dd.MM', { locale: ru }),
+        date: format(date, 'dd.MM', { locale: dateLocale }),
         balance: Math.round(dayBalance * 100) / 100,
         payments: dayPayments.reduce((sum, p) => sum + parseFloat(String(p.amount || 0)), 0),
       });
     }
     return data;
-  }, [payments, abonents]);
+  }, [payments, abonents, dateLocale]);
 
-  // Распределение по статусам
   const statusData = useMemo(() => {
     const statusMap: Record<string, number> = {};
     abonents.forEach(a => {
       const status = a.status.toUpperCase();
       statusMap[status] = (statusMap[status] || 0) + 1;
     });
-    return Object.entries(statusMap).map(([name, value]) => ({ name, value }));
-  }, [abonents]);
+    return Object.entries(statusMap).map(([name, value]) => ({ name: statusLabels[name] || name, value }));
+  }, [abonents, statusLabels]);
 
-  // Топ тарифы
   const topTariffs = useMemo(() => {
     return tariffs.slice(0, 5).map(t => ({
       name: t.name,
@@ -113,12 +121,12 @@ export default function ReportsPage() {
 
   const exportCSV = () => {
     const csvContent = [
-      ['Метрика', 'Значение'],
-      ['Всего абонентов', metrics.totalAbonents],
-      ['Активных абонентов', metrics.activeAbonents],
-      ['Общий баланс', metrics.totalBalance],
-      ['Сумма платежей', metrics.totalPayments],
-      ['Задач в SPOOL', metrics.pendingTasks],
+      [t('Metric'), t('Value')],
+      [t('TotalAbonents'), metrics.totalAbonents],
+      [t('ActiveAbonents'), metrics.activeAbonents],
+      [t('TotalBalance'), metrics.totalBalance],
+      [t('TotalPayments'), metrics.totalPayments],
+      [t('PendingTasks'), metrics.pendingTasks],
       ['ARPU', metrics.arpu.toFixed(2)],
     ].map(row => row.join(',')).join('\n');
 
@@ -136,7 +144,7 @@ export default function ReportsPage() {
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <h2 className="text-3xl font-bold tracking-tight">Отчёты</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('ReportsTitle')}</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
@@ -150,7 +158,7 @@ export default function ReportsPage() {
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Отчёты</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('ReportsTitle')}</h2>
         <div className="flex gap-2">
           <select
             className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -163,16 +171,15 @@ export default function ReportsPage() {
           </select>
           <Button variant="outline" onClick={exportCSV}>
             <Download className="mr-2 h-4 w-4" />
-            Экспорт CSV
+            {t('ExportCSV')}
           </Button>
         </div>
       </div>
 
-      {/* Метрики */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Всего абонентов</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('TotalAbonents')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -181,7 +188,7 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Активных абонентов</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ActiveAbonents')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -190,25 +197,25 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Общий баланс</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('TotalBalance')}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalBalance.toLocaleString('ru-RU')} ₽</div>
+            <div className="text-2xl font-bold">{metrics.totalBalance.toLocaleString(numberLocale)} ₽</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Платежи за период</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('PaymentsForPeriod')}</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalPayments.toLocaleString('ru-RU')} ₽</div>
+            <div className="text-2xl font-bold">{metrics.totalPayments.toLocaleString(numberLocale)} ₽</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Задач в SPOOL</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('PendingTasks')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -226,12 +233,11 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      {/* Графики */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Динамика баланса и платежей</CardTitle>
-            <CardDescription>Последние 30 дней</CardDescription>
+            <CardTitle>{t('BalancePaymentsDynamics')}</CardTitle>
+            <CardDescription>{t('Last30Days')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -241,8 +247,8 @@ export default function ReportsPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="balance" stroke="#8884d8" name="Баланс" />
-                <Line type="monotone" dataKey="payments" stroke="#82ca9d" name="Платежи" />
+                <Line type="monotone" dataKey="balance" stroke="#8884d8" name={t('Balance')} />
+                <Line type="monotone" dataKey="payments" stroke="#82ca9d" name={t('Payments')} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -250,7 +256,7 @@ export default function ReportsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Распределение по статусам</CardTitle>
+            <CardTitle>{t('StatusDistribution')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -278,7 +284,7 @@ export default function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Топ тарифы</CardTitle>
+          <CardTitle>{t('TopTariffs')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -287,7 +293,7 @@ export default function ReportsPage() {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="price" fill="#8884d8" name="Цена" />
+              <Bar dataKey="price" fill="#8884d8" name={t('Price')} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

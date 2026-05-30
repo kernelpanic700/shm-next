@@ -19,6 +19,20 @@ class PaymentRepository(PaymentRepositoryProtocol):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    def _to_dict(self, payment: PaymentModel) -> dict:
+        """Конвертировать PaymentModel в dict."""
+        return {
+            "id": str(payment.id),
+            "abonent_id": str(payment.abonent_id),
+            "amount": payment.amount,
+            "currency": payment.currency,
+            "payment_method": payment.payment_method,
+            "status": payment.status,
+            "external_id": payment.external_id,
+            "created_at": payment.created_at.isoformat() if payment.created_at else None,
+            "completed_at": payment.completed_at.isoformat() if payment.completed_at else None,
+        }
+
     async def create(
         self,
         abonent_id: UUID,
@@ -79,7 +93,28 @@ class PaymentRepository(PaymentRepositoryProtocol):
         stmt = stmt.order_by(PaymentModel.created_at.desc()).limit(limit)
 
         result = await self._session.execute(stmt)
-        return result.scalars().all()
+        payments = result.scalars().all()
+        return [self._to_dict(p) for p in payments]
+
+    async def get_all(
+        self,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        limit: int = 50,
+    ) -> list:
+        """Получить все платежи."""
+        stmt = select(PaymentModel)
+
+        if from_date:
+            stmt = stmt.where(PaymentModel.created_at >= from_date)
+        if to_date:
+            stmt = stmt.where(PaymentModel.created_at <= to_date)
+
+        stmt = stmt.order_by(PaymentModel.created_at.desc()).limit(limit)
+
+        result = await self._session.execute(stmt)
+        payments = result.scalars().all()
+        return [self._to_dict(p) for p in payments]
 
     async def confirm(self, payment_id: UUID) -> bool:
         """Подтвердить платёж."""

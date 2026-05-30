@@ -72,3 +72,22 @@ class TestBonusEntry:
         entry.expire()
         assert entry.is_active is False
         assert entry.version == 2
+
+    def test_consume_partial_bonus(self):
+        entry = BonusEntry(amount=Money("100.00", "RUB"))
+
+        used = entry.consume(Money("35.00", "RUB"))
+
+        assert used == Money("35.00", "RUB")
+        assert entry.amount == Money("65.00", "RUB")
+        assert entry.is_active is True
+        assert entry.version == 2
+
+    def test_consume_full_bonus_deactivates_entry(self):
+        entry = BonusEntry(amount=Money("50.00", "RUB"))
+
+        used = entry.consume(Money("80.00", "RUB"))
+
+        assert used == Money("50.00", "RUB")
+        assert entry.amount == Money("0.00", "RUB")
+        assert entry.is_active is False

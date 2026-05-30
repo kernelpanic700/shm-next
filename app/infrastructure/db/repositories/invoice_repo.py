@@ -8,10 +8,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.domain.entities.invoice import Invoice
+from app.core.domain.entities.invoice import Invoice, InvoiceStatus
 from app.core.domain.repositories.invoice import InvoiceRepositoryProtocol
 from app.infrastructure.db.models import InvoiceModel
 
@@ -47,6 +47,34 @@ class InvoiceRepository(InvoiceRepositoryProtocol):
         models = result.scalars().all()
         return [self._to_domain(m) for m in models]
 
+    async def list(
+        self,
+        status: str | None = None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Invoice], int]:
+        """Получить список счетов."""
+        filters = []
+        if status:
+            filters.append(InvoiceModel.status == status)
+        if from_date:
+            filters.append(InvoiceModel.created_at >= from_date)
+        if to_date:
+            filters.append(InvoiceModel.created_at <= to_date)
+
+        total_stmt = select(func.count()).select_from(InvoiceModel)
+        stmt = select(InvoiceModel).order_by(InvoiceModel.created_at.desc())
+        if filters:
+            total_stmt = total_stmt.where(*filters)
+            stmt = stmt.where(*filters)
+
+        total_result = await self._session.execute(total_stmt)
+        result = await self._session.execute(stmt.offset(offset).limit(limit))
+        models = result.scalars().all()
+        return [self._to_domain(m) for m in models], int(total_result.scalar_one())
+
     async def get_unpaid(self) -> list[Invoice]:
         """Получить неоплаченные счета."""
         stmt = select(InvoiceModel).where(
@@ -64,6 +92,26 @@ class InvoiceRepository(InvoiceRepositoryProtocol):
         stmt = select(InvoiceModel).where(
             InvoiceModel.status == "OVERDUE",
             InvoiceModel.due_date < now,
+        )
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_domain(m) for m in models]
+
+    async def get_due_for_overdue(
+        self,
+        now: datetime,
+        limit: int = 100,
+    ) -> list[Invoice]:
+        """Получить счета, которые пора перевести в OVERDUE."""
+        stmt = (
+            select(InvoiceModel)
+            .where(
+                InvoiceModel.status.in_([InvoiceStatus.ISSUED, InvoiceStatus.SENT]),
+                InvoiceModel.due_date.is_not(None),
+                InvoiceModel.due_date < now,
+            )
+            .order_by(InvoiceModel.due_date.asc())
+            .limit(limit)
         )
         result = await self._session.execute(stmt)
         models = result.scalars().all()

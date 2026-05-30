@@ -1,14 +1,14 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, Abonent } from '@/lib/api';
+import { api, Abonent, AbonentListResponse } from '@/lib/api';
 
 export const useAbonents = () => {
   return useQuery({
     queryKey: ['abonents'],
     queryFn: async () => {
-      const response = await api.get<Abonent[]>('/abonents');
-      return response.data;
+      const response = await api.get<AbonentListResponse>('/abonents');
+      return response.data.items;
     },
   });
 };

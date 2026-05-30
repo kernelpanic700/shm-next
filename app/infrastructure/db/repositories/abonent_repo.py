@@ -50,6 +50,22 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
         models = await BaseRepository.list(self, offset=offset, limit=limit, filters=filters)
         return [self._to_domain(m) for m in models]
 
+    async def list_active(
+        self,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Abonent]:
+        """Список активных абонентов для биллинг-цикла."""
+        stmt = (
+            select(AbonentModel)
+            .where(AbonentModel.status == "ACTIVE")
+            .order_by(AbonentModel.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return [self._to_domain(model) for model in result.scalars().all()]
+
     async def save(self, abonent: Abonent) -> Abonent:
         """Сохранить абонента."""
         # Пытаемся найти существующую модель
@@ -59,12 +75,14 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
             # Обновляем существующую модель
             model.full_name = abonent.full_name
             model.phone = abonent.phone
+            model.email = abonent.email
             model.account_number = abonent.account_number
             model.balance = float(abonent.balance.amount)
             model.currency = abonent.balance.currency.value if hasattr(abonent.balance, 'currency') else "RUB"
             model.status = abonent.status.value
             model.allow_negative = abonent.allow_negative
             model.tariff_id = abonent.tariff_id
+            model.password_hash = abonent.password_hash
             model.version = abonent.version
         else:
             # Создаём новую модель
@@ -72,12 +90,14 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
                 id=abonent.id,
                 full_name=abonent.full_name,
                 phone=abonent.phone,
+                email=abonent.email,
                 account_number=abonent.account_number,
                 balance=float(abonent.balance.amount),
                 currency=abonent.balance.currency.value if hasattr(abonent.balance, 'currency') else "RUB",
                 status=abonent.status.value,
                 allow_negative=abonent.allow_negative,
                 tariff_id=abonent.tariff_id,
+                password_hash=abonent.password_hash,
                 version=abonent.version,
             )
 
@@ -100,11 +120,13 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
             id=model.id,
             full_name=model.full_name,
             phone=model.phone,
+            email=model.email,
             account_number=model.account_number,
             balance=Money(model.balance, model.currency),
             status=AbonentStatus(model.status),
             allow_negative=model.allow_negative,
             tariff_id=model.tariff_id,
+            password_hash=model.password_hash,
             created_at=model.created_at,
             updated_at=model.updated_at,
             version=model.version,

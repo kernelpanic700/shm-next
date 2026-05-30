@@ -3,7 +3,9 @@
 # =============================================================================
 from app.core.domain.entities.abonent import Abonent, AbonentCreate, AbonentUpdate
 from app.core.domain.entities.bonus_entry import BonusEntry
+from app.core.domain.entities.catalog_service import CatalogService
 from app.core.domain.entities.discount import Discount
+from app.core.domain.entities.event_action_rule import EventActionRule
 from app.core.domain.entities.invoice import Invoice
 from app.core.domain.entities.payment import Payment
 from app.core.domain.entities.service import UserService
@@ -18,7 +20,9 @@ __all__ = [
     "AbonentCreate",
     "AbonentUpdate",
     "BonusEntry",
+    "CatalogService",
     "Discount",
+    "EventActionRule",
     "Invoice",
     "Payment",
     "Session",

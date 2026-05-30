@@ -129,6 +129,95 @@ class ServiceUpdateRequest(BaseModel):
     metadata: dict | None = None
 
 
+class ServiceRenewRequest(BaseModel):
+    """Запрос на продление SHM-услуги."""
+    abonent_discount_percent: int = Field(default=0, ge=0, le=100)
+    bonus_balance: Decimal | None = Field(default=None, ge=0)
+
+
+class ServiceStopRequest(BaseModel):
+    """Запрос на остановку SHM-услуги."""
+    reason: str = Field(default="user_request", min_length=1, max_length=128)
+
+
+class CatalogServiceCreateRequest(BaseModel):
+    """Запрос на создание каталожной SHM-услуги."""
+    name: constr(min_length=1, max_length=64)
+    cost: Decimal = Field(default=Decimal("0.00"), ge=0)
+    currency: str = Field(default="RUB", min_length=3, max_length=3)
+    period_cost: Decimal = Field(default=Decimal("1.0000"), ge=0)
+    category: str | None = Field(default=None, max_length=16)
+    children: list[UUID] = Field(default_factory=list)
+    next_service_id: UUID | None = None
+    legacy_service_id: int | None = None
+    allow_to_order: bool = True
+    max_count: int | None = Field(default=None, ge=1)
+    question: bool = False
+    pay_always: bool = False
+    no_discount: bool = False
+    description: str | None = Field(default=None, max_length=255)
+    pay_in_credit: bool = False
+    config: dict | None = None
+    is_composite: bool = False
+
+
+class CatalogServiceUpdateRequest(BaseModel):
+    """Запрос на обновление каталожной SHM-услуги."""
+    name: str | None = Field(default=None, min_length=1, max_length=64)
+    cost: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    period_cost: Decimal | None = Field(default=None, ge=0)
+    category: str | None = Field(default=None, max_length=16)
+    children: list[UUID] | None = None
+    next_service_id: UUID | None = None
+    legacy_service_id: int | None = None
+    allow_to_order: bool | None = None
+    max_count: int | None = Field(default=None, ge=1)
+    question: bool | None = None
+    pay_always: bool | None = None
+    no_discount: bool | None = None
+    description: str | None = Field(default=None, max_length=255)
+    pay_in_credit: bool | None = None
+    config: dict | None = None
+    is_composite: bool | None = None
+    is_deleted: bool | None = None
+
+
+class CatalogServiceOrderRequest(BaseModel):
+    """Запрос на заказ SHM-услуги абонентом."""
+    abonent_id: UUID
+    quantity: int = Field(default=1, ge=1)
+    abonent_discount_percent: int = Field(default=0, ge=0, le=100)
+    bonus_balance: Decimal | None = Field(default=None, ge=0)
+    metadata: dict | None = None
+
+
+class EventActionRuleCreateRequest(BaseModel):
+    """Запрос на создание правила действия по событию."""
+    event_type: str = Field(..., min_length=1, max_length=64)
+    action_type: str = Field(..., min_length=1, max_length=100)
+    title: str | None = Field(default=None, max_length=128)
+    service_type: str | None = Field(default=None, max_length=64)
+    catalog_service_id: UUID | None = None
+    settings: dict | None = None
+    priority: int = Field(default=50, ge=0, le=100)
+    max_retries: int = Field(default=3, ge=1, le=10)
+    is_enabled: bool = True
+
+
+class EventActionRuleUpdateRequest(BaseModel):
+    """Запрос на обновление правила действия по событию."""
+    event_type: str | None = Field(default=None, min_length=1, max_length=64)
+    action_type: str | None = Field(default=None, min_length=1, max_length=100)
+    title: str | None = Field(default=None, max_length=128)
+    service_type: str | None = Field(default=None, max_length=64)
+    catalog_service_id: UUID | None = None
+    settings: dict | None = None
+    priority: int | None = Field(default=None, ge=0, le=100)
+    max_retries: int | None = Field(default=None, ge=1, le=10)
+    is_enabled: bool | None = None
+
+
 # === Tariffs ===
 
 class TariffCreateRequest(BaseModel):
@@ -149,15 +238,68 @@ class TariffUpdateRequest(BaseModel):
     services: list[dict] | None = None
     is_active: bool | None = None
     price: float | None = None
+    currency: str | None = None
+    billing_period: str | None = None
 
 
 # === Invoices ===
+
+class InvoiceCreateRequest(BaseModel):
+    """Запрос на создание счёта."""
+    abonent_id: UUID
+    amount: float = Field(gt=0, description="Сумма счёта")
+    currency: str = Field(default="RUB", min_length=3, max_length=3)
+    period_start: datetime | None = None
+    period_end: datetime | None = None
+    due_date: datetime | None = None
+    description: str | None = Field(default=None, max_length=2000)
+    metadata: dict | None = None
+    issue_now: bool = True
+
 
 class InvoiceFilter(BaseModel):
     """Фильтр счетов."""
     status: str | None = None
     from_date: datetime | None = None
     to_date: datetime | None = None
+
+
+# === Bonuses and Discounts ===
+
+class BonusEntryCreateRequest(BaseModel):
+    """Запрос на начисление бонуса абоненту."""
+    abonent_id: UUID
+    amount: Decimal = Field(..., gt=0)
+    currency: str = Field(default="RUB", min_length=3, max_length=3)
+    reason: str = Field(default="", max_length=500)
+    expires_at: datetime | None = None
+    source: str = Field(default="manual", min_length=1, max_length=50)
+
+
+class DiscountCreateRequest(BaseModel):
+    """Запрос на создание скидки."""
+    name: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(default="", max_length=2000)
+    discount_type: str = Field(default="percent", pattern="^(percent|fixed|relative)$")
+    value: Decimal = Field(..., ge=0)
+    currency: str = Field(default="RUB", min_length=3, max_length=3)
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+    is_active: bool = True
+    max_uses: int | None = Field(default=None, ge=1)
+
+
+class DiscountUpdateRequest(BaseModel):
+    """Запрос на обновление скидки."""
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=2000)
+    discount_type: str | None = Field(default=None, pattern="^(percent|fixed|relative)$")
+    value: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+    is_active: bool | None = None
+    max_uses: int | None = Field(default=None, ge=1)
 
 
 # === Spool ===

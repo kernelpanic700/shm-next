@@ -35,6 +35,26 @@ class BonusEntryRepository(BonusEntryRepositoryProtocol, BaseRepository):
         models = result.scalars().all()
         return [self._to_domain(model) for model in models]
 
+    async def get_usable_by_abonent(
+        self,
+        abonent_id: UUID,
+        at: datetime,
+    ) -> list[BonusEntry]:
+        """Получить активные неистёкшие бонусы абонента."""
+        check_at = at.replace(tzinfo=None) if at.tzinfo is not None else at
+        stmt = (
+            select(BonusEntryModel)
+            .where(
+                BonusEntryModel.abonent_id == abonent_id,
+                BonusEntryModel.is_active,
+                (BonusEntryModel.expires_at.is_(None))
+                | (BonusEntryModel.expires_at >= check_at),
+            )
+            .order_by(BonusEntryModel.expires_at.asc().nulls_last(), BonusEntryModel.id)
+        )
+        result = await self._session.execute(stmt)
+        return [self._to_domain(model) for model in result.scalars().all()]
+
     async def get_active(self) -> list[BonusEntry]:
         """Получить все активные бонусные записи."""
         stmt = select(BonusEntryModel).where(
@@ -99,5 +119,7 @@ class BonusEntryRepository(BonusEntryRepositoryProtocol, BaseRepository):
             expires_at=model.expires_at,
             is_active=model.is_active,
             source=model.source,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
             version=model.version,
         )

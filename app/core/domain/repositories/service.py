@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 from uuid import UUID
 
 from app.core.domain.entities.abonent import Abonent
@@ -18,6 +19,11 @@ class ServiceRepositoryProtocol(ABC):
     @abstractmethod
     async def get_abonent(self, abonent_id: UUID) -> Abonent | None:
         """Получить абонента по ID (для проверки статуса)."""
+        ...
+
+    @abstractmethod
+    async def save_abonent(self, abonent: Abonent) -> Abonent:
+        """Сохранить абонента после изменения баланса/статуса."""
         ...
 
     @abstractmethod
@@ -37,6 +43,15 @@ class ServiceRepositoryProtocol(ABC):
         self, abonent_id: UUID, service_type: str | None = None
     ) -> list[UserService]:
         """Получить активные услуги абонента по типу."""
+        ...
+
+    @abstractmethod
+    async def get_expiring_auto_bill(
+        self,
+        cutoff: datetime,
+        limit: int = 100,
+    ) -> list[UserService]:
+        """Получить SHM-услуги для автоматического продления."""
         ...
 
     @abstractmethod

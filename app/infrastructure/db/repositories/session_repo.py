@@ -94,7 +94,7 @@ class SessionRepository(SessionRepositoryProtocol):
         expires_at = model.expires_at
         if expires_at and expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=UTC)
-        
+
         return Session(
             id=model.id,
             abonent_id=model.abonent_id,

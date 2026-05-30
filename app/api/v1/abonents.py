@@ -5,8 +5,6 @@
 Роутер для управления абонентами.
 """
 
-from __future__ import annotations
-
 from uuid import UUID
 
 from litestar import Controller, delete, get, patch, post
@@ -24,17 +22,18 @@ from litestar.status_codes import (
 from app.api.dependencies import get_abonent_service, provide_uow_dependency
 from app.api.dto.requests import AbonentCreateRequest, AbonentUpdateRequest, BalanceTopUpRequest
 from app.api.dto.responses import AbonentListResponse, AbonentResponse
-from app.core.domain.value_objects import AbonentStatus
+from app.core.application.abonents.abonent_service import AbonentService
+from app.core.domain.entities.abonent import AbonentCreate, AbonentUpdate
 from app.infrastructure.db.unit_of_work import UnitOfWork
 
 
 class AbonentController(Controller):
     """Контроллер для управления абонентами."""
-    path = "/v1/abonents"
+    path = "/abonents"
     tags = ["Abonents"]
     dependencies = {
         "uow": Provide(provide_uow_dependency),
-        "abonent_service": Provide(get_abonent_service),
+        "abonent_service": Provide(get_abonent_service, sync_to_thread=False),
     }
 
     @get(
@@ -45,7 +44,7 @@ class AbonentController(Controller):
     )
     async def list_abonents(
         self,
-        uow: UnitOfWork,
+        abonent_service: AbonentService,
         page: int = 1,
         size: int = 20,
         status: str | None = Parameter(query="status", required=False),
@@ -55,10 +54,13 @@ class AbonentController(Controller):
     ) -> AbonentListResponse:
         """Получить список абонентов с поддержкой фильтрации и пагинации."""
         offset = (page - 1) * size
-        abonents = await uow.abonents.list(
+        abonents = await abonent_service.list_abonents(
             offset=offset,
             limit=size,
             status=status,
+            tariff_id=tariff_id,
+            min_balance=min_balance,
+            max_balance=max_balance,
         )
         total = len(abonents)  # Note: This should ideally be a separate count query
         pages = (total + size - 1) // size if total > 0 else 0
@@ -66,7 +68,7 @@ class AbonentController(Controller):
             items=[AbonentResponse.model_validate(a, from_attributes=True) for a in abonents],
             total=total,
             page=page,
-            size=size,
+            per_page=size,
             pages=pages,
         )
 
@@ -79,10 +81,10 @@ class AbonentController(Controller):
     async def get_abonent(
         self,
         abonent_id: UUID,
-        uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> AbonentResponse:
         """Получить абонента по его идентификатору."""
-        abonent = await uow.abonents.get(abonent_id)
+        abonent = await abonent_service.get_abonent(abonent_id)
         if not abonent:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
@@ -98,10 +100,10 @@ class AbonentController(Controller):
     async def get_by_phone(
         self,
         phone: str,
-        uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> AbonentResponse:
         """Найти абонента по номеру телефона."""
-        abonent = await uow.abonents.get_by_phone(phone)
+        abonent = await abonent_service.get_abonent_by_phone(phone)
         if not abonent:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
@@ -117,10 +119,10 @@ class AbonentController(Controller):
     async def get_by_account(
         self,
         account_number: str,
-        uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> AbonentResponse:
         """Найти абонента по номеру лицевого счёта."""
-        abonent = await uow.abonents.get_by_account(account_number)
+        abonent = await abonent_service.get_abonent_by_account(account_number)
         if not abonent:
             raise HTTPException(
                 status_code=HTTP_404_NOT_FOUND,
@@ -138,39 +140,28 @@ class AbonentController(Controller):
         self,
         data: AbonentCreateRequest,
         uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> AbonentResponse:
         """Создать нового абонента."""
         async with uow:
-            from app.core.domain.entities.abonent import Abonent
-            from app.core.domain.value_objects import Currency, Money
-
-            # Check unique phone
-            existing = await uow.abonents.get_by_phone(data.phone)
-            if existing:
+            try:
+                saved = await abonent_service.create_abonent(
+                    AbonentCreate(
+                        full_name=data.full_name,
+                        phone=data.phone,
+                        account_number=data.account_number,
+                        balance=data.balance,
+                        currency=data.currency,
+                        allow_negative=data.allow_negative,
+                        tariff_id=data.tariff_id,
+                        metadata=data.metadata,
+                    )
+                )
+            except ValueError as exc:
                 raise HTTPException(
                     status_code=HTTP_409_CONFLICT,
-                    detail=f"Abonent with phone {data.phone} already exists",
-                )
-
-            # Check unique account number
-            if data.account_number:
-                existing_account = await uow.abonents.get_by_account(data.account_number)
-                if existing_account:
-                    raise HTTPException(
-                        status_code=HTTP_409_CONFLICT,
-                        detail=f"Abonent with account {data.account_number} already exists",
-                    )
-
-            balance = Money(data.balance, Currency(data.currency))
-            abonent = Abonent(
-                full_name=data.full_name,
-                phone=data.phone,
-                account_number=data.account_number,
-                balance=balance,
-                allow_negative=data.allow_negative,
-                tariff_id=data.tariff_id,
-            )
-            saved = await uow.abonents.save(abonent)
+                    detail=str(exc),
+                ) from exc
             await uow.commit()
             return AbonentResponse.model_validate(saved, from_attributes=True)
 
@@ -185,36 +176,32 @@ class AbonentController(Controller):
         abonent_id: UUID,
         data: AbonentUpdateRequest,
         uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> AbonentResponse:
         """Обновить абонента частично (PATCH)."""
         async with uow:
-            abonent = await uow.abonents.get(abonent_id)
-            if not abonent:
+            try:
+                saved = await abonent_service.update_abonent(
+                    abonent_id,
+                    AbonentUpdate(
+                        full_name=data.full_name,
+                        phone=data.phone,
+                        status=data.status,
+                        tariff_id=data.tariff_id,
+                        allow_negative=data.allow_negative,
+                        metadata=data.metadata,
+                    ),
+                )
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=HTTP_409_CONFLICT,
+                    detail=str(exc),
+                ) from exc
+            if not saved:
                 raise HTTPException(
                     status_code=HTTP_404_NOT_FOUND,
                     detail=f"Abonent with id {abonent_id} not found",
                 )
-
-            # Apply changes
-            if data.full_name is not None:
-                abonent._full_name = data.full_name
-            if data.phone is not None:
-                existing = await uow.abonents.get_by_phone(data.phone)
-                if existing and existing.id != abonent_id:
-                    raise HTTPException(
-                        status_code=HTTP_409_CONFLICT,
-                        detail=f"Phone {data.phone} already belongs to another abonent",
-                    )
-                abonent._phone = data.phone
-            if data.status is not None:
-                from app.core.domain.value_objects import AbonentStatus
-                abonent._status = AbonentStatus(data.status)
-            if data.tariff_id is not None:
-                abonent.assign_tariff(data.tariff_id)
-            if data.allow_negative is not None:
-                abonent._allow_negative = data.allow_negative
-
-            saved = await uow.abonents.save(abonent)
             await uow.commit()
             return AbonentResponse.model_validate(saved, from_attributes=True)
 
@@ -227,17 +214,16 @@ class AbonentController(Controller):
         self,
         abonent_id: UUID,
         uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> None:
         """Удалить абонента (изменить статус на INACTIVE)."""
         async with uow:
-            abonent = await uow.abonents.get(abonent_id)
-            if not abonent:
+            saved = await abonent_service.deactivate_abonent(abonent_id)
+            if not saved:
                 raise HTTPException(
                     status_code=HTTP_404_NOT_FOUND,
                     detail=f"Abonent with id {abonent_id} not found",
                 )
-            abonent._status = AbonentStatus.INACTIVE
-            await uow.abonents.save(abonent)
             await uow.commit()
             return None
 
@@ -252,18 +238,21 @@ class AbonentController(Controller):
         abonent_id: UUID,
         data: BalanceTopUpRequest,
         uow: UnitOfWork,
+        abonent_service: AbonentService,
     ) -> AbonentResponse:
         """Пополнить баланс абонента на указанную сумму."""
         async with uow:
-            from app.core.domain.value_objects import Money
-
-            abonent = await uow.abonents.get(abonent_id)
-            if not abonent:
+            try:
+                saved = await abonent_service.change_balance(
+                    abonent_id,
+                    amount=float(data.amount),
+                    currency="RUB",
+                    reason=f"Manual top-up via {data.payment_method}",
+                )
+            except ValueError as exc:
                 raise HTTPException(
                     status_code=HTTP_404_NOT_FOUND,
-                    detail=f"Abonent with id {abonent_id} not found",
-                )
-            abonent.change_balance(Money(float(data.amount), "RUB"), reason="Manual top-up")
-            saved = await uow.abonents.save(abonent)
+                    detail=str(exc),
+                ) from exc
             await uow.commit()
             return AbonentResponse.model_validate(saved, from_attributes=True)

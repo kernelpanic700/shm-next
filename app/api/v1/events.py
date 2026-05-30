@@ -15,7 +15,7 @@ from app.infrastructure.db.models import AuditLogModel
 
 
 class EventsController(Controller):
-    path = "/v1/events"
+    path = "/events"
     tags = ["Events"]
 
     @get(

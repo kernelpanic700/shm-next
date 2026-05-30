@@ -7,7 +7,7 @@
 
 services:
   # ============================================================
-  # PostgreSQL 16
+  # PostgreSQL 16 (Non-standard port: 15432)
   # ============================================================
   postgres:
     image: postgres:16-alpine
@@ -19,7 +19,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT:-15432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shm}"]
       interval: 5s
@@ -34,12 +34,12 @@ services:
           cpus: "1.0"
 
   # ============================================================
-  # Redis 7 (кэш, брокер задач, rate limiting)
+  # Redis 7 (Non-standard port: 16379)
   # ============================================================
   redis:
     image: redis:7-alpine
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-16379}:6379"
     volumes:
       - redisdata:/data
     command: >
@@ -61,7 +61,7 @@ services:
           cpus: "0.5"
 
   # ============================================================
-  # API Server (Litestar + Uvicorn)
+  # API Server (Litestar + Uvicorn) - Port 8001
   # ============================================================
   api:
     build:
@@ -74,12 +74,14 @@ services:
       - TASKIQ_BROKER_URL=redis://redis:6379/1
       - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production-use-at-least-32-chars}
+      - ADMIN_PHONE=${ADMIN_PHONE:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
       - DEBUG=${DEBUG:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
       - SENTRY_DSN=${SENTRY_DSN:-}
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${API_PORT:-8001}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,9 +93,16 @@ services:
         limits:
           memory: 512M
           cpus: "1.0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     # Профиль dev — с hot-reload
     profiles:
       - dev
+      - default
     volumes:
       - ./app:/app/app:ro
     command: >
@@ -120,12 +129,14 @@ services:
       - TASKIQ_BROKER_URL=redis://redis:6379/1
       - TASKIQ_RESULT_BACKEND=redis://redis:6379/2
       - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_PHONE=${ADMIN_PHONE:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:-}
       - DEBUG=false
       - LOG_LEVEL=${LOG_LEVEL:-WARNING}
-      - CORS_ORIGINS=${CORS_ORIGINS:-}
       - SENTRY_DSN=${SENTRY_DSN:-}
     ports:
-      - "${API_PORT:-8000}:8000"
+      - "${API_PORT:-8001}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -177,10 +188,9 @@ services:
           cpus: "1.0"
     profiles:
       - dev
-    command: >
-      taskiq app.worker.app:broker
-      --workers 2
-      --log-level info
+    healthcheck:
+      disable: true
+    command: taskiq worker app.worker.app:broker --workers 2 --log-level INFO
 
   worker-prod:
     build:
@@ -208,20 +218,55 @@ services:
           cpus: "2.0"
     profiles:
       - prod
-    command: >
-      taskiq app.worker.app:broker
-      --workers ${WORKER_CONCURRENCY:-4}
-      --log-level warning
+    healthcheck:
+      disable: true
+    command: taskiq worker app.worker.app:broker --workers 4 --log-level WARNING
 
   # ============================================================
-  # Admin Panel (Jinja2 + HTMX, встроенный в Litestar)
+  # Client Panel (Next.js) - Port 3001
   # ============================================================
-  # Админка работает как часть API-сервера на том же порту,
-  # но на пути /admin/
-  # В продакшене рекомендуется добавить Nginx/Traefik перед API.
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "${CLIENT_PORT:-3001}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_PORT:-8001}/api/v1
+      - NEXT_PUBLIC_ADMIN_URL=http://localhost:3002
+    depends_on:
+      - api-prod
+    profiles:
+      - prod
+
+  # ============================================================
+  # Admin Panel (Next.js) - Port 3002
+  # ============================================================
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8001}/api/v1
+        NEXT_PUBLIC_ADMIN_URL: http://localhost:${ADMIN_PORT:-3002}
+        API_REWRITE_URL: http://api-prod:8000/api/:path*
+    ports:
+      - "${ADMIN_PORT:-3002}:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:${API_PORT:-8001}/api/v1
+      - NEXT_PUBLIC_ADMIN_URL=http://localhost:3002
+      - API_REWRITE_URL=http://api-prod:8000/api/:path*
+    depends_on:
+      - api-prod
+    profiles:
+      - prod
 
 volumes:
   pgdata:
     driver: local
   redisdata:
     driver: local
+
+networks:
+  shm-next:
+    driver: bridge

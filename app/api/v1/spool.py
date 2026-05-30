@@ -17,7 +17,7 @@ from app.core.domain.repositories.spool import SpoolRepositoryProtocol
 
 
 class SpoolController(Controller):
-    path = "/v1/spool"
+    path = "/spool"
     tags = ["Spool"]
 
     @get(
@@ -70,8 +70,8 @@ class SpoolController(Controller):
         task_id: int,
         state: State,
     ) -> ApiResponse:
-        from app.infrastructure.db.models import SpoolTask
-        task = await state.session.get(SpoolTask, task_id)
+        repo: SpoolRepositoryProtocol = state.spool_repo
+        task = await repo.get_by_id(task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
         return ApiResponse(

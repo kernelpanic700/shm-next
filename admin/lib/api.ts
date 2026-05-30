@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+// Use relative URL to go through Next.js rewrites proxy
+// This works in Docker and locally through the Next.js rewrite in next.config.js.
+const API_BASE_URL = '/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -34,7 +36,9 @@ api.interceptors.response.use(
             refresh_token: refreshToken,
           });
           
-          const { access_token, refresh_token } = response.data;
+          // API returns { success, data: { access_token, refresh_token, ... } }
+          const tokenData = response.data.data || response.data;
+          const { access_token, refresh_token } = tokenData;
           localStorage.setItem('access_token', access_token);
           localStorage.setItem('refresh_token', refresh_token);
           
@@ -55,16 +59,25 @@ api.interceptors.response.use(
 // API Types
 export interface Abonent {
   id: string;
-  name: string;
-  full_name?: string;
+  full_name: string;
+  name?: string;
   phone: string;
   account_number?: string;
   email?: string;
   address?: string;
   status: 'active' | 'inactive' | 'suspended' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'SUSPENDED';
   balance: number;
+  currency: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface AbonentListResponse {
+  items: Abonent[];
+  total: number;
+  page: number;
+  per_page: number;
+  pages: number;
 }
 
 export interface Tariff {
@@ -93,9 +106,11 @@ export interface Payment {
   abonent_id: string;
   amount: number;
   currency: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: 'NEW' | 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
   payment_method: string;
+  external_id: string | null;
   created_at: string;
+  completed_at: string | null;
 }
 
 export interface SpoolTask {
@@ -120,6 +135,95 @@ export interface BillingCycle {
   started_at: string | null;
   completed_at: string | null;
   created_at: string;
+}
+
+export interface BillingCycleRunResult {
+  period_start: string;
+  period_end: string;
+  offset: number;
+  limit: number;
+  processed: number;
+  withdraw_count: number;
+  invoice_count: number;
+  items: Array<{
+    abonent_id: string;
+    withdraw_count: number;
+    invoice_ids: string[];
+    status: 'processed' | 'skipped';
+  }>;
+}
+
+export interface WithdrawResult {
+  service_id: string;
+  amount: number;
+  currency: string;
+  subtotal?: number;
+  discount?: number;
+  bonus_used?: number;
+  pay_in_credit?: boolean;
+  withdraw_id?: string;
+  invoice_id?: string;
+}
+
+export interface Invoice {
+  id: string;
+  abonent_id: string;
+  amount: number;
+  currency: string;
+  status: 'DRAFT' | 'ISSUED' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+  period_start: string | null;
+  period_end: string | null;
+  due_date: string | null;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceListResponse {
+  items: Invoice[];
+  total: number;
+  page: number;
+  per_page: number;
+}
+
+export interface BonusEntry {
+  id: string;
+  abonent_id: string;
+  amount: number;
+  currency: string;
+  reason: string;
+  expires_at: string | null;
+  is_active: boolean;
+  source: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BonusEntryListResponse {
+  items: BonusEntry[];
+  total: number;
+}
+
+export interface Discount {
+  id: string;
+  name: string;
+  description: string;
+  discount_type: 'percent' | 'fixed' | 'relative';
+  value: number;
+  currency: string;
+  valid_from: string | null;
+  valid_to: string | null;
+  is_active: boolean;
+  max_uses: number | null;
+  used_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DiscountListResponse {
+  items: Discount[];
+  total: number;
 }
 
 export interface LoginRequest {

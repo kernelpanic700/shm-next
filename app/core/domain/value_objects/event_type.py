@@ -43,6 +43,7 @@ class EventType(Enum):
     # === Сервисы ===
     SERVICE_ACTIVATED = ("service.activated", EventCategory.INTEGRATION, False)
     SERVICE_DEACTIVATED = ("service.deactivated", EventCategory.INTEGRATION, False)
+    SERVICE_RENEWED = ("service.renewed", EventCategory.INTEGRATION, False)
     SERVICE_ERROR = ("service.error", EventCategory.INTEGRATION, True)
 
     # === Spool ===

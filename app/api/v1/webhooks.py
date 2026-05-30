@@ -17,7 +17,7 @@ from app.api.dto.responses import ApiResponse, WebhookResponse
 
 
 class WebhookController(Controller):
-    path = "/v1/webhooks"
+    path = "/webhooks"
     tags = ["Webhooks"]
 
     @get(

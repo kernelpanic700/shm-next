@@ -3,12 +3,9 @@
 # =============================================================================
 """Эндпоинты для проверки здоровья системы."""
 
-from __future__ import annotations
-
 from datetime import UTC, datetime
 
 from litestar import Controller, get
-
 from app.infrastructure.db.unit_of_work import UnitOfWork
 
 

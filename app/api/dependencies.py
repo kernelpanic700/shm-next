@@ -8,8 +8,6 @@ This module contains functions that provide dependencies to route handlers
 via Litestar's dependency injection system.
 """
 
-from __future__ import annotations
-
 from collections.abc import AsyncGenerator
 
 from litestar.datastructures import State
@@ -19,12 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.api.config import get_app_config
 from app.core.application.abonents.abonent_service import AbonentService
 from app.core.application.billing.billing_service import BillingService
+from app.core.application.invoices.invoice_service import InvoiceService
 from app.core.application.payments.payment_service import PaymentService
 from app.core.application.services.service_service import ServiceService
 from app.core.application.tariffs.tariff_service import TariffService
 from app.infrastructure.cache.redis_cache import RedisCache
 from app.infrastructure.db.unit_of_work import UnitOfWork
-from app.worker.brokers import broker
 
 
 async def provide_db_session(state: State) -> AsyncGenerator[AsyncSession, None]:
@@ -62,19 +60,23 @@ def provide_uow(session: AsyncSession) -> UnitOfWork:
     return UnitOfWork(session)
 
 
-def provide_uow_dependency(state: State) -> UnitOfWork:
+async def provide_uow_dependency(state: State) -> AsyncGenerator[UnitOfWork, None]:
     """
     Provide a UnitOfWork instance for dependency injection.
 
     Args:
         state: Litestar application state containing the session maker.
 
-    Returns:
+    Yields:
         UnitOfWork: Unit of work instance.
     """
     session_maker = state.db_session_maker
     session = session_maker()
-    return UnitOfWork(session)
+    uow = UnitOfWork(session)
+    try:
+        yield uow
+    finally:
+        await uow.close()
 
 
 def get_abonent_service(uow: UnitOfWork) -> AbonentService:
@@ -116,9 +118,23 @@ def get_service_service(uow: UnitOfWork) -> ServiceService:
     Returns:
         ServiceService: Service service instance.
     """
+    from app.core.application.events import ServiceEventSpoolHandler
     from app.core.application.services.service_service import ServiceService
     from app.core.services.event_bus import EventBus
-    return ServiceService(uow.services, EventBus())
+
+    event_bus = EventBus()
+    spool_handler = ServiceEventSpoolHandler(
+        rule_repo=uow.event_action_rules,
+        spool_repo=uow.spool,
+    )
+    for event_type in ServiceEventSpoolHandler.SUPPORTED_EVENTS:
+        event_bus.subscribe(event_type, spool_handler)
+
+    return ServiceService(
+        uow.services,
+        event_bus,
+        catalog_service_repo=uow.catalog_services,
+    )
 
 
 def get_payment_service(uow: UnitOfWork) -> PaymentService:
@@ -133,7 +149,26 @@ def get_payment_service(uow: UnitOfWork) -> PaymentService:
     """
     from app.core.application.payments.payment_service import PaymentService
     from app.core.services.event_bus import EventBus
-    return PaymentService(uow.payments, uow.abonents, EventBus())
+    return PaymentService(uow.payments, uow.abonents, EventBus(), uow.invoices)
+
+
+def get_invoice_service(uow: UnitOfWork) -> InvoiceService:
+    """
+    Provide an InvoiceService instance.
+
+    Args:
+        uow: UnitOfWork instance.
+
+    Returns:
+        InvoiceService: Invoice service instance.
+    """
+    from app.core.application.invoices.invoice_service import InvoiceService
+
+    return InvoiceService(
+        uow.invoices,
+        uow.abonents,
+        get_payment_service(uow),
+    )
 
 
 def get_billing_service(uow: UnitOfWork) -> BillingService:
@@ -156,6 +191,8 @@ def get_billing_service(uow: UnitOfWork) -> BillingService:
         uow.withdraws,
         EventBus(),
         BillingEngine(),
+        uow.invoices,
+        uow.bonus_entries,
     )
 
 
@@ -200,6 +237,11 @@ def provide_broker() -> AsyncGenerator:
         Broker: Taskiq broker instance.
     """
     try:
+        from app.worker.brokers import broker
+    except ModuleNotFoundError:
+        broker = None
+
+    try:
         yield broker
     finally:
         # Close connection if needed
@@ -221,9 +263,9 @@ def provide_config() -> State:
 
 # Dependency mappings for Litestar
 dependencies = {
-    "db_session": Provide(provide_db_session, sync_to_thread=False),
+    "db_session": Provide(provide_db_session),
     "uow": Provide(provide_uow, sync_to_thread=False),
-    "redis": Provide(provide_redis, sync_to_thread=False),
-    "broker": Provide(provide_broker, sync_to_thread=False),
+    "redis": Provide(provide_redis),
+    "broker": Provide(provide_broker),
     "config": Provide(provide_config, sync_to_thread=False),
 }

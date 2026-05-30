@@ -12,6 +12,7 @@ import pytest
 
 from app.core.application.payments.payment_service import PaymentService
 from app.core.domain.entities.abonent import Abonent
+from app.core.domain.entities.invoice import Invoice, InvoiceStatus
 from app.core.domain.value_objects import Money
 
 
@@ -21,11 +22,13 @@ class TestPaymentService:
     def setup_method(self):
         self.payment_repo = AsyncMock()
         self.abonent_repo = AsyncMock()
+        self.invoice_repo = AsyncMock()
         self.event_bus = AsyncMock()
         self.service = PaymentService(
             payment_repo=self.payment_repo,
             abonent_repo=self.abonent_repo,
             event_bus=self.event_bus,
+            invoice_repo=self.invoice_repo,
         )
 
     @pytest.mark.asyncio
@@ -138,35 +141,114 @@ class TestPaymentService:
     @pytest.mark.asyncio
     async def test_confirm_payment_success(self):
         """Подтверждение платежа — успех."""
+        payment_id = uuid4()
+        abonent_id = uuid4()
+        abonent = Abonent(id=abonent_id, balance=Money(1000, "RUB"))
+        self.payment_repo.get.return_value = {
+            "id": str(payment_id),
+            "abonent_id": str(abonent_id),
+            "amount": 500.0,
+            "currency": "RUB",
+            "status": "NEW",
+        }
         self.payment_repo.confirm.return_value = True
+        self.abonent_repo.get.return_value = abonent
+        self.abonent_repo.save.return_value = abonent
 
-        result = await self.service.confirm_payment(uuid4())
+        result = await self.service.confirm_payment(payment_id)
 
         assert result is True
+        assert abonent.balance.amount == 1500
+        self.abonent_repo.save.assert_called_once_with(abonent)
 
     @pytest.mark.asyncio
     async def test_confirm_payment_failed(self):
         """Подтверждение платежа — не найден."""
+        self.payment_repo.get.return_value = {
+            "id": str(uuid4()),
+            "abonent_id": str(uuid4()),
+            "amount": 500.0,
+            "currency": "RUB",
+            "status": "COMPLETED",
+        }
         self.payment_repo.confirm.return_value = False
 
         result = await self.service.confirm_payment(uuid4())
 
         assert result is False
+        self.abonent_repo.save.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_refund_payment_success(self):
         """Возврат платежа — успех."""
+        payment_id = uuid4()
+        abonent_id = uuid4()
+        abonent = Abonent(id=abonent_id, balance=Money(1000, "RUB"))
+        self.payment_repo.get.return_value = {
+            "id": str(payment_id),
+            "abonent_id": str(abonent_id),
+            "amount": 300.0,
+            "currency": "RUB",
+            "status": "COMPLETED",
+        }
         self.payment_repo.refund.return_value = True
+        self.abonent_repo.get.return_value = abonent
+        self.abonent_repo.save.return_value = abonent
+        self.invoice_repo.get.return_value = None
 
-        result = await self.service.refund_payment(uuid4())
+        result = await self.service.refund_payment(payment_id)
 
         assert result is True
+        assert abonent.balance.amount == 700
+        self.abonent_repo.save.assert_called_once_with(abonent)
+
+    @pytest.mark.asyncio
+    async def test_refund_payment_marks_linked_invoice_unpaid(self):
+        """Возврат оплаты счёта возвращает счёт в ISSUED."""
+        payment_id = uuid4()
+        abonent_id = uuid4()
+        invoice_id = uuid4()
+        abonent = Abonent(id=abonent_id, balance=Money(1000, "RUB"))
+        invoice = Invoice(
+            id=invoice_id,
+            abonent_id=abonent_id,
+            amount=300,
+            status=InvoiceStatus.PAID,
+        )
+        self.payment_repo.get.return_value = {
+            "id": str(payment_id),
+            "abonent_id": str(abonent_id),
+            "amount": 300.0,
+            "currency": "RUB",
+            "status": "COMPLETED",
+            "external_id": f"invoice:{invoice_id}:provider-123",
+        }
+        self.payment_repo.refund.return_value = True
+        self.abonent_repo.get.return_value = abonent
+        self.abonent_repo.save.return_value = abonent
+        self.invoice_repo.get.return_value = invoice
+        self.invoice_repo.save.return_value = invoice
+
+        result = await self.service.refund_payment(payment_id)
+
+        assert result is True
+        assert invoice.status == InvoiceStatus.ISSUED
+        self.invoice_repo.get.assert_called_once_with(invoice_id)
+        self.invoice_repo.save.assert_called_once_with(invoice)
 
     @pytest.mark.asyncio
     async def test_refund_payment_failed(self):
         """Возврат платежа — не найден."""
+        self.payment_repo.get.return_value = {
+            "id": str(uuid4()),
+            "abonent_id": str(uuid4()),
+            "amount": 300.0,
+            "currency": "RUB",
+            "status": "NEW",
+        }
         self.payment_repo.refund.return_value = False
 
         result = await self.service.refund_payment(uuid4())
 
         assert result is False
+        self.abonent_repo.save.assert_not_called()

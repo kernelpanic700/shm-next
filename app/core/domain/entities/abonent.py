@@ -76,10 +76,12 @@ class Abonent:
         full_name: str = "",
         phone: str = "",
         account_number: str = "",
+        email: str | None = None,
         balance: Money | None = None,
         status: AbonentStatus = AbonentStatus.ACTIVE,
         allow_negative: bool = False,
         tariff_id: UUID | None = None,
+        password_hash: str | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
         version: int = 1,
@@ -88,10 +90,12 @@ class Abonent:
         self._full_name = full_name
         self._phone = phone
         self._account_number = account_number
+        self._email = email
         self._balance = balance or Money(0, "RUB")
         self._status = status
         self._allow_negative = allow_negative
         self._tariff_id = tariff_id
+        self._password_hash = password_hash
         self._created_at = created_at or datetime.now(UTC)
         self._updated_at = updated_at or datetime.now(UTC)
         self._version = version
@@ -113,6 +117,10 @@ class Abonent:
         return self._account_number
 
     @property
+    def email(self) -> str | None:
+        return self._email
+
+    @property
     def balance(self) -> Money:
         return self._balance
 
@@ -127,6 +135,10 @@ class Abonent:
     @property
     def tariff_id(self) -> UUID | None:
         return self._tariff_id
+
+    @property
+    def password_hash(self) -> str | None:
+        return self._password_hash
 
     @property
     def created_at(self) -> datetime:
@@ -159,7 +171,12 @@ class Abonent:
         self._updated_at = datetime.now(UTC)
         self._version += 1
 
-    def change_balance(self, amount: Money, reason: str = "") -> None:
+    def change_balance(
+        self,
+        amount: Money,
+        reason: str = "",
+        allow_credit: bool = False,
+    ) -> None:
         """
         Изменить баланс абонента.
 
@@ -175,7 +192,7 @@ class Abonent:
 
         new_balance = self._balance + amount
 
-        if new_balance.is_negative() and not self._allow_negative:
+        if new_balance.is_negative() and not self._allow_negative and not allow_credit:
             raise ValueError(
                 f"Balance cannot be negative for abonent {self._id}"
             )

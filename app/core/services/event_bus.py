@@ -84,24 +84,25 @@ class EventBus:
         handlers = self._handlers.get(event_type, [])
 
         for handler in handlers:
+            handler_name = getattr(handler, "__name__", handler.__class__.__name__)
             try:
                 result = handler(event)
                 if hasattr(result, "__await__"):
                     result = await result
-                results.append({"handler": handler.__name__, "success": True, "result": result})
+                results.append({"handler": handler_name, "success": True, "result": result})
                 logger.debug(
                     "Handler executed successfully",
-                    handler=handler.__name__,
+                    handler=handler_name,
                     event_type=event_type,
                 )
             except Exception as exc:
                 logger.error(
                     "Handler failed",
-                    handler=handler.__name__,
+                    handler=handler_name,
                     event_type=event_type,
                     error=str(exc),
                 )
-                results.append({"handler": handler.__name__, "success": False, "error": str(exc)})
+                results.append({"handler": handler_name, "success": False, "error": str(exc)})
 
         return results
 

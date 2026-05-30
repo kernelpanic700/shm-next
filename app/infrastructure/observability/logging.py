@@ -81,20 +81,22 @@ def get_logger(name: str) -> structlog.BoundLogger:
     return structlog.get_logger(name)
 
 
-# =============================================================================
-# OpenTelemetry Tracing
-# =============================================================================
-"""Настройка OpenTelemetry tracing."""
-
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
-
 def setup_tracing(service_name: str = "shm-next") -> None:
     """Настроить OpenTelemetry tracing."""
+    try:
+        from opentelemetry import trace
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    except ModuleNotFoundError:
+        logging.getLogger(__name__).warning(
+            "OpenTelemetry exporter is not installed; tracing disabled"
+        )
+        return
+
     resource = Resource.create({"service.name": service_name})
 
     provider = TracerProvider(resource=resource)

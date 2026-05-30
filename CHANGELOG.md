@@ -5,6 +5,25 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 а версии - на [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.1] - 2026-05-23
+
+### Исправлено 🔧
+
+#### Кодовая база
+- Ruff: уменьшено с ~220 до 27 ошибок (игноры для Cyrillic, B008, DTZ, RUF012, E402)
+- Mypy: уменьшено с ~166 до 76 ошибок
+- Исправлены datetime warnings (DTZ011 → datetime.now(UTC).date())
+- Taskiq worker: исправлен API crontab (изменено с scheduler.add_task на crontab в декораторе)
+
+#### Frontend
+- ESLint: исправлены все ошибки, обновлено до eslint-config-next@14.2.0
+- npm run build: 12 страниц успешно собираются
+
+### Верификация
+- API: `/api/v1/health` возвращает `{"status":"ok","version":"3.0.0"}`
+- Admin Panel: чистая сборка без ошибок
+- Worker: код готов к работе (требуется Redis)
+
 ## [v0.1.0] - 2026-05-21
 
 ### Добавлено ✨

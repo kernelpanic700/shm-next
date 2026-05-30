@@ -11,7 +11,9 @@ from app.infrastructure.db.models.abonent import AbonentModel
 from app.infrastructure.db.models.audit_log import AuditLogModel
 from app.infrastructure.db.models.base import Base
 from app.infrastructure.db.models.bonus_entry import BonusEntryModel
+from app.infrastructure.db.models.catalog_service import CatalogServiceModel
 from app.infrastructure.db.models.discount import DiscountModel
+from app.infrastructure.db.models.event_action_rule import EventActionRuleModel
 from app.infrastructure.db.models.invoice import InvoiceModel
 from app.infrastructure.db.models.notification import NotificationModel
 from app.infrastructure.db.models.payment import PaymentModel
@@ -27,7 +29,9 @@ __all__ = [
     "AuditLogModel",
     "Base",
     "BonusEntryModel",
+    "CatalogServiceModel",
     "DiscountModel",
+    "EventActionRuleModel",
     "InvoiceModel",
     "NotificationModel",
     "PaymentModel",

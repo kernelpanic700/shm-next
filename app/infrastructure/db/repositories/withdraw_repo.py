@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,6 +70,24 @@ class WithdrawRepository(WithdrawRepositoryProtocol):
         result = await self._session.execute(stmt)
         models = result.scalars().all()
         return [self._to_domain(m) for m in models]
+
+    async def create_withdraw(
+        self,
+        abonent_id: UUID,
+        service_id: UUID,
+        amount: float,
+        currency: str,
+    ) -> UUID:
+        """Создать списание и вернуть его ID."""
+        withdraw = Withdraw(
+            id=uuid4(),
+            abonent_id=abonent_id,
+            service_id=service_id,
+            amount=amount,
+            currency=currency,
+        )
+        saved = await self.save(withdraw)
+        return saved.id
 
     async def save(self, withdraw: Withdraw) -> Withdraw:
         """Сохранить списание."""

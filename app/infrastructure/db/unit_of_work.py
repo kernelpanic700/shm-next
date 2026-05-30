@@ -22,7 +22,9 @@ from app.infrastructure.db.repositories.abonent_repo import AbonentRepository
 from app.infrastructure.db.repositories.audit_log_repo import AuditLogRepository
 from app.infrastructure.db.repositories.billing_repo import BillingRepository
 from app.infrastructure.db.repositories.bonus_entry_repo import BonusEntryRepository
+from app.infrastructure.db.repositories.catalog_service_repo import CatalogServiceRepository
 from app.infrastructure.db.repositories.discount_repo import DiscountRepository
+from app.infrastructure.db.repositories.event_action_rule_repo import EventActionRuleRepository
 from app.infrastructure.db.repositories.invoice_repo import InvoiceRepository
 from app.infrastructure.db.repositories.notification_repo import NotificationRepository
 from app.infrastructure.db.repositories.payment_repo import PaymentRepository
@@ -60,6 +62,8 @@ class UnitOfWork:
         self._webhook_repo: WebhookRepository | None = None
         self._tariff_service_repo: TariffServiceRepository | None = None
         self._audit_log_repo: AuditLogRepository | None = None
+        self._catalog_service_repo: CatalogServiceRepository | None = None
+        self._event_action_rule_repo: EventActionRuleRepository | None = None
 
     @property
     def abonents(self) -> AbonentRepository:
@@ -150,6 +154,18 @@ class UnitOfWork:
         if self._audit_log_repo is None:
             self._audit_log_repo = AuditLogRepository(self._session)
         return self._audit_log_repo
+
+    @property
+    def catalog_services(self) -> CatalogServiceRepository:
+        if self._catalog_service_repo is None:
+            self._catalog_service_repo = CatalogServiceRepository(self._session)
+        return self._catalog_service_repo
+
+    @property
+    def event_action_rules(self) -> EventActionRuleRepository:
+        if self._event_action_rule_repo is None:
+            self._event_action_rule_repo = EventActionRuleRepository(self._session)
+        return self._event_action_rule_repo
 
     async def commit(self) -> None:
         """Фиксация всех изменений."""

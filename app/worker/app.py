@@ -6,36 +6,16 @@
 from __future__ import annotations
 
 from app.worker.brokers import broker, scheduler
-from app.worker.tasks import (
+
+# Импортируем задачи для регистрации в брокере
+# Расписание задач настраивается через crontab в task-декораторах
+from app.worker.tasks import (  # noqa: F401
     cleanup_expired_sessions_task,
+    process_spool_task_task,
     retry_failed_spool_tasks_task,
     run_billing_cycle_task,
+    run_shm_auto_renewal_task,
     send_pending_notifications_task,
-)
-
-# Регистрация периодических задач в планировщике
-scheduler.add_task(
-    task=run_billing_cycle_task,
-    schedule_id="billing_cycle_daily",
-    cron="0 2 * * *",  # Каждый день в 2:00
-)
-
-scheduler.add_task(
-    task=retry_failed_spool_tasks_task,
-    schedule_id="retry_failed_hourly",
-    cron="0 * * * *",  # Каждый час
-)
-
-scheduler.add_task(
-    task=cleanup_expired_sessions_task,
-    schedule_id="cleanup_daily",
-    cron="0 3 * * *",  # Каждый день в 3:00
-)
-
-scheduler.add_task(
-    task=send_pending_notifications_task,
-    schedule_id="notifications_every_5min",
-    cron="*/5 * * * *",  # Каждые 5 минут
 )
 
 

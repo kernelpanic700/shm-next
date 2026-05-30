@@ -12,7 +12,9 @@ from app.core.domain.repositories import (
     BaseRepository,
     BillingRepositoryProtocol,
     BonusEntryRepositoryProtocol,
+    CatalogServiceRepositoryProtocol,
     DiscountRepositoryProtocol,
+    EventActionRuleRepositoryProtocol,
     InvoiceRepositoryProtocol,
     PaymentRepositoryProtocol,
     ServiceRepositoryProtocol,
@@ -40,7 +42,16 @@ class TestAbonentRepositoryProtocol:
         assert issubclass(AbonentRepositoryProtocol, object)
 
     def test_has_required_methods(self):
-        required = ["get", "get_by_phone", "get_by_account", "list", "save", "delete", "exists"]
+        required = [
+            "get",
+            "get_by_phone",
+            "get_by_account",
+            "list",
+            "list_active",
+            "save",
+            "delete",
+            "exists",
+        ]
         for method in required:
             assert hasattr(AbonentRepositoryProtocol, method)
 
@@ -80,7 +91,15 @@ class TestServiceRepositoryProtocol:
         assert issubclass(ServiceRepositoryProtocol, object)
 
     def test_has_required_methods(self):
-        required = ["get", "get_by_abonent", "get_active_by_abonent", "save"]
+        required = [
+            "get_abonent",
+            "save_abonent",
+            "get",
+            "get_by_abonent",
+            "get_active_by_abonent",
+            "get_expiring_auto_bill",
+            "save",
+        ]
         for method in required:
             assert hasattr(ServiceRepositoryProtocol, method)
 
@@ -128,12 +147,39 @@ class TestDiscountRepositoryProtocol:
             assert hasattr(DiscountRepositoryProtocol, method)
 
 
+class TestCatalogServiceRepositoryProtocol:
+    def test_protocol_defined(self):
+        assert issubclass(CatalogServiceRepositoryProtocol, object)
+
+    def test_has_required_methods(self):
+        required = ["get", "get_orderable", "list", "save"]
+        for method in required:
+            assert hasattr(CatalogServiceRepositoryProtocol, method)
+
+
+class TestEventActionRuleRepositoryProtocol:
+    def test_protocol_defined(self):
+        assert issubclass(EventActionRuleRepositoryProtocol, object)
+
+    def test_has_required_methods(self):
+        required = ["get", "get_matching", "list", "save"]
+        for method in required:
+            assert hasattr(EventActionRuleRepositoryProtocol, method)
+
+
 class TestBonusEntryRepositoryProtocol:
     def test_protocol_defined(self):
         assert issubclass(BonusEntryRepositoryProtocol, object)
 
     def test_has_required_methods(self):
-        required = ["get", "get_by_abonent", "get_active", "get_expired", "save"]
+        required = [
+            "get",
+            "get_by_abonent",
+            "get_usable_by_abonent",
+            "get_active",
+            "get_expired",
+            "save",
+        ]
         for method in required:
             assert hasattr(BonusEntryRepositoryProtocol, method)
 
@@ -153,7 +199,14 @@ class TestInvoiceRepositoryProtocol:
         assert issubclass(InvoiceRepositoryProtocol, object)
 
     def test_has_required_methods(self):
-        required = ["get", "get_by_abonent", "get_unpaid", "get_overdue", "save"]
+        required = [
+            "get",
+            "get_by_abonent",
+            "get_unpaid",
+            "get_overdue",
+            "get_due_for_overdue",
+            "save",
+        ]
         for method in required:
             assert hasattr(InvoiceRepositoryProtocol, method)
 

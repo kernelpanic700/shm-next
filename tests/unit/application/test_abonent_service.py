@@ -120,6 +120,18 @@ class TestAbonentService:
         self.repo.list.assert_called_once_with(offset=0, limit=10, status=None)
 
     @pytest.mark.asyncio
+    async def test_list_abonents_filters_by_balance(self):
+        abonents = [
+            Abonent(full_name="Абонент 1", phone="+79990000001", balance=Money(100, "RUB")),
+            Abonent(full_name="Абонент 2", phone="+79990000002", balance=Money(900, "RUB")),
+        ]
+        self.repo.list.return_value = abonents
+
+        result = await self.service.list_abonents(min_balance=500)
+
+        assert result == [abonents[1]]
+
+    @pytest.mark.asyncio
     async def test_update_abonent_found(self):
         abonent_id = uuid4()
         abonent = Abonent(id=abonent_id, full_name="Старое имя")
@@ -150,6 +162,20 @@ class TestAbonentService:
         result = await self.service.delete_abonent(abonent_id)
 
         assert result is True
+
+    @pytest.mark.asyncio
+    async def test_deactivate_abonent(self):
+        abonent_id = uuid4()
+        abonent = Abonent(id=abonent_id)
+        self.repo.get.return_value = abonent
+        self.repo.save.return_value = abonent
+
+        result = await self.service.deactivate_abonent(abonent_id)
+
+        assert result is abonent
+        assert result.status.value == "INACTIVE"
+        self.repo.save.assert_called_once_with(abonent)
+        self.event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_change_balance(self):

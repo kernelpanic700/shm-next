@@ -33,6 +33,10 @@ class AbonentModel(Base):
     account_number: Mapped[str] = mapped_column(
         String(20), nullable=False, unique=True
     )
+    email: Mapped[str] = mapped_column(String(255), nullable=True)
+    password_hash: Mapped[str] = mapped_column(
+        String(255), nullable=True
+    )
     balance: Mapped[float] = mapped_column(Numeric(precision=12, scale=4), nullable=False, server_default="0")
     currency: Mapped[str] = mapped_column(
         String(3), nullable=False, server_default="RUB"

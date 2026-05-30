@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
 from taskiq import TaskiqBroker
@@ -30,9 +30,10 @@ def create_broker() -> TaskiqBroker:
     """
     config = AppConfig()
 
+    result_backend = RedisAsyncResultBackend(redis_url=config.taskiq_result_backend)
     broker = TaskiqBroker(
         broker_url=config.taskiq_broker_url,
-        result_backend=RedisAsyncResultBackend(result_url=config.taskiq_result_backend),
+        result_backend=result_backend,
     )
 
     # Регистрация встроенных действий
@@ -312,7 +313,7 @@ async def send_pending_notifications() -> int:
 
                         if success:
                             notification.status = "SENT"
-                            notification.sent_at = datetime.now(timezone.utc)
+                            notification.sent_at = datetime.now(UTC)
                         else:
                             notification.status = "FAILED"
 

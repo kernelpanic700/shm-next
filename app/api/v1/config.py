@@ -12,7 +12,7 @@ from app.api.dto.responses import ApiResponse
 
 
 class ConfigController(Controller):
-    path = "/v1/config"
+    path = "/config"
     tags = ["Config"]
 
     @get(

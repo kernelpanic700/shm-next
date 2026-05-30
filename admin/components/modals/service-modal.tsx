@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Service } from '@/lib/api';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface ServiceModalProps {
   service?: Service | null;
@@ -25,6 +26,7 @@ interface ServiceModalProps {
 }
 
 export function ServiceModal({ service, open, onOpenChange, onSuccess }: ServiceModalProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -55,16 +57,16 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
     try {
       if (service) {
         await api.patch(`/services/${service.id}`, formData);
-        toast.success('Услуга обновлена');
+        toast.success(t('ServiceUpdated'));
       } else {
         await api.post('/services', formData);
-        toast.success('Услуга создана');
+        toast.success(t('ServiceCreated'));
       }
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error('Ошибка', {
-        description: error.response?.data?.detail || 'Не удалось сохранить услугу',
+      toast.error(t('Error'), {
+        description: error.response?.data?.detail || t('ServiceSaveFailed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -75,34 +77,34 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{service ? 'Редактировать услугу' : 'Новая услуга'}</DialogTitle>
+          <DialogTitle>{service ? t('EditService') : t('NewService')}</DialogTitle>
           <DialogDescription>
-            {service ? `Изменение услуги: ${service.name}` : 'Создайте новую услугу в системе'}
+            {service ? t('EditServiceDescription', { name: service.name }) : t('CreateServiceDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Название</Label>
+              <Label htmlFor="name">{t('Name')}</Label>
               <Input
                 id="name"
-                placeholder="Интернет-услуга"
+                placeholder={t('ServiceNamePlaceholder')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Описание</Label>
+              <Label htmlFor="description">{t('Description')}</Label>
               <Textarea
                 id="description"
-                placeholder="Описание услуги..."
+                placeholder={t('ServiceDescriptionPlaceholder')}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Цена</Label>
+              <Label htmlFor="price">{t('Price')}</Label>
               <Input
                 id="price"
                 type="number"
@@ -117,10 +119,10 @@ export function ServiceModal({ service, open, onOpenChange, onSuccess }: Service
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Отмена
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Сохраняем...' : service ? 'Обновить' : 'Создать'}
+              {isSubmitting ? t('Saving') : service ? t('Update') : t('Create')}
             </Button>
           </DialogFooter>
         </form>

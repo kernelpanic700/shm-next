@@ -37,11 +37,21 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    # Use psycopg2 (sync driver) for migrations, not asyncpg
+    db_url = config.get_main_option("sqlalchemy.url", "")
+    if db_url.startswith("postgresql+asyncpg://"):
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
+    # Override the URL if we modified it
+    if db_url:
+        from sqlalchemy import create_engine
+        connectable = create_engine(db_url, poolclass=pool.NullPool)
+
     with connectable.connect() as connection:
         context.configure(
             connection=connection,

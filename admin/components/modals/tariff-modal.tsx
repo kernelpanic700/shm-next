@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tariff } from '@/lib/api';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface TariffModalProps {
   tariff?: Tariff | null;
@@ -24,13 +25,8 @@ interface TariffModalProps {
   onSuccess?: () => void;
 }
 
-const billingCycles = [
-  { value: 'monthly', label: 'Месячный' },
-  { value: 'quarterly', label: 'Квартальный' },
-  { value: 'yearly', label: 'Годовой' },
-];
-
 export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffModalProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -38,6 +34,11 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
     billing_cycle: 'monthly',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const billingCycles = [
+    { value: 'monthly', label: t('Monthly') },
+    { value: 'quarterly', label: t('Quarterly') },
+    { value: 'yearly', label: t('Yearly') },
+  ];
 
   useEffect(() => {
     if (tariff) {
@@ -64,16 +65,16 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
     try {
       if (tariff) {
         await api.patch(`/tariffs/${tariff.id}`, formData);
-        toast.success('Тариф обновлён');
+        toast.success(t('TariffUpdated'));
       } else {
         await api.post('/tariffs', formData);
-        toast.success('Тариф создан');
+        toast.success(t('TariffCreated'));
       }
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      toast.error('Ошибка', {
-        description: error.response?.data?.detail || 'Не удалось сохранить тариф',
+      toast.error(t('Error'), {
+        description: error.response?.data?.detail || t('TariffSaveFailed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -84,35 +85,35 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{tariff ? 'Редактировать тариф' : 'Новый тариф'}</DialogTitle>
+          <DialogTitle>{tariff ? t('EditTariff') : t('NewTariffTitle')}</DialogTitle>
           <DialogDescription>
-            {tariff ? `Изменение тарифа: ${tariff.name}` : 'Создайте новый тариф в системе'}
+            {tariff ? t('EditTariffDescription', { name: tariff.name }) : t('CreateTariffDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Название</Label>
+              <Label htmlFor="name">{t('Name')}</Label>
               <Input
                 id="name"
-                placeholder="Тариф Оптимум"
+                placeholder={t('TariffNamePlaceholder')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Описание</Label>
+              <Label htmlFor="description">{t('Description')}</Label>
               <Textarea
                 id="description"
-                placeholder="Описание тарифа"
+                placeholder={t('TariffDescriptionPlaceholder')}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Цена</Label>
+                <Label htmlFor="price">{t('Price')}</Label>
                 <Input
                   id="price"
                   type="number"
@@ -125,7 +126,7 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="billing_cycle">Период</Label>
+                <Label htmlFor="billing_cycle">{t('Period')}</Label>
                 <select
                   id="billing_cycle"
                   value={formData.billing_cycle}
@@ -143,10 +144,10 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Отмена
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Сохраняем...' : tariff ? 'Сохранить' : 'Создать'}
+              {isSubmitting ? t('Saving') : tariff ? t('Save') : t('Create')}
             </Button>
           </DialogFooter>
         </form>

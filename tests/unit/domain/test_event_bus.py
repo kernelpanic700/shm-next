@@ -95,6 +95,27 @@ class TestEventBus:
         assert results[0]["success"] is True
 
     @pytest.mark.asyncio
+    async def test_publish_callable_object_handler(self):
+        bus = EventBus()
+
+        class Handler:
+            def __call__(self, event):
+                return event.event_type.value
+
+        bus.subscribe("abonent.created", Handler())
+        event = DomainEvent(EventType.ABONENT_CREATED)
+
+        results = await bus.publish(event)
+
+        assert results == [
+            {
+                "handler": "Handler",
+                "success": True,
+                "result": "abonent.created",
+            }
+        ]
+
+    @pytest.mark.asyncio
     async def test_handler_failure(self):
         bus = EventBus()
 

@@ -54,6 +54,9 @@ class TariffService:
             description=data.description or "",
             services=data.services,
             is_active=data.is_active,
+            price=data.price,
+            currency=data.currency,
+            billing_period=data.billing_period,
         )
         saved = await self._tariff_repo.save(tariff)
 
@@ -76,6 +79,12 @@ class TariffService:
             tariff._services = update_data["services"]
         if "is_active" in update_data:
             tariff._is_active = update_data["is_active"]
+        if "price" in update_data:
+            tariff._price = update_data["price"]
+        if "currency" in update_data:
+            tariff._currency = update_data["currency"]
+        if "billing_period" in update_data:
+            tariff._billing_period = update_data["billing_period"]
 
         saved = await self._tariff_repo.save(tariff)
         logger.info("Tariff updated", tariff_id=saved.id, name=saved.name)

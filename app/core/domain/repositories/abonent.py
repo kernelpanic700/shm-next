@@ -45,6 +45,15 @@ class AbonentRepositoryProtocol(ABC):
         ...
 
     @abstractmethod
+    async def list_active(
+        self,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Abonent]:
+        """Список активных абонентов для биллинг-цикла."""
+        ...
+
+    @abstractmethod
     async def save(self, abonent: Abonent) -> Abonent:
         """Сохранить абонента (create или update)."""
         ...

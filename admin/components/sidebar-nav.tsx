@@ -10,7 +10,9 @@ import {
   FileText,
   Settings,
   BarChart3,
+  BadgePercent,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const navItems = [
   {
@@ -34,6 +36,11 @@ const navItems = [
     icon: CreditCard,
   },
   {
+    title: 'Finance',
+    href: '/finance',
+    icon: BadgePercent,
+  },
+  {
     title: 'Reports',
     href: '/reports',
     icon: BarChart3,
@@ -47,6 +54,7 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   return (
     <nav className="flex flex-col gap-2 p-4">
@@ -60,7 +68,7 @@ export function SidebarNav() {
           )}
         >
           <item.icon className="h-4 w-4" />
-          {item.title}
+          {t(item.title)}
         </Link>
       ))}
     </nav>

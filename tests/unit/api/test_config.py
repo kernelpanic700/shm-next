@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from app.api.config import AppConfig, get_app_config
+from app.api.config import AppConfig, get_app_config, reset_config_cache
 
 
 class TestAppConfig:
@@ -21,7 +21,7 @@ class TestAppConfig:
 
     def test_test_config(self):
         from app.api.config import TestConfig
-        config = TestConfig()
+        config = TestConfig(_env_file=None, debug=True)
         assert config.debug is True
         assert config.database_url.endswith("shm_test")
         assert config.log_level == "DEBUG"
@@ -45,3 +45,17 @@ class TestAppConfig:
         config = AppConfig()
         assert isinstance(config.cors_origins, list)
         assert len(config.cors_origins) > 0
+
+    def test_legacy_debug_release_env_parses_false(self, monkeypatch):
+        reset_config_cache()
+        monkeypatch.setenv("DEBUG", "release")
+        config = get_app_config()
+        assert config.debug is False
+        reset_config_cache()
+
+    def test_legacy_debug_debug_env_parses_true(self, monkeypatch):
+        reset_config_cache()
+        monkeypatch.setenv("DEBUG", "debug")
+        config = get_app_config()
+        assert config.debug is True
+        reset_config_cache()

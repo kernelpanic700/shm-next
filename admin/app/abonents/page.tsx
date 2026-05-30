@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,86 +15,10 @@ import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TopUpBalanceModal, CreateAbonentModal } from '@/components/modals';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-
-const columns: ColumnDef<Abonent>[] = [
-  {
-    accessorKey: 'name',
-    header: 'ФИО',
-  },
-  {
-    accessorKey: 'phone',
-    header: 'Телефон',
-  },
-  {
-    accessorKey: 'account_number',
-    header: 'Лицевой счёт',
-  },
-  {
-    accessorKey: 'status',
-    header: 'Статус',
-    cell: ({ row }) => {
-      const status = row.getValue('status') as string;
-      const statusMap: Record<string, { label: string; className: string }> = {
-        ACTIVE: { label: 'Активен', className: 'bg-green-100 text-green-800' },
-        INACTIVE: { label: 'Неактивен', className: 'bg-gray-100 text-gray-800' },
-        BLOCKED: { label: 'Заблокирован', className: 'bg-red-100 text-red-800' },
-        SUSPENDED: { label: 'Приостановлен', className: 'bg-yellow-100 text-yellow-800' },
-      };
-      const config = statusMap[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
-      return (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
-          {config.label}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: 'balance',
-    header: 'Баланс',
-    cell: ({ row }) => {
-      const amount = parseFloat(String(row.getValue('balance') || 0));
-      return <span className="font-medium">{amount.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽</span>;
-    },
-  },
-  {
-    id: 'actions',
-    header: 'Действия',
-    cell: ({ row, table }) => {
-      const abonent = row.original;
-      return (
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => (table.options.meta as any)?.onTopUp(abonent)}
-            title="Пополнить баланс"
-          >
-            <DollarSign className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => (table.options.meta as any)?.onChangeTariff(abonent)}
-            title="Изменить тариф"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => (table.options.meta as any)?.onDeactivate(abonent)}
-            title="Деактивировать"
-          >
-            <PowerOff className="h-4 w-4" />
-          </Button>
-        </div>
-      );
-    },
-    enableSorting: false,
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function AbonentsPage() {
+  const { t, i18n } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [minBalance, setMinBalance] = useState<string>('');
   const [maxBalance, setMaxBalance] = useState<string>('');
@@ -101,8 +27,8 @@ export default function AbonentsPage() {
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; abonent: Abonent | null }>({ open: false, abonent: null });
   
   const { data: abonents = [], isLoading, isError, refetch } = useAbonents();
+  const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
 
-  // Клиентская фильтрация
   const filteredAbonents = useMemo(() => {
     return abonents.filter((abonent) => {
       if (statusFilter !== 'all' && abonent.status !== statusFilter) {
@@ -119,12 +45,90 @@ export default function AbonentsPage() {
     });
   }, [abonents, statusFilter, minBalance, maxBalance]);
 
+  const columns = useMemo<ColumnDef<Abonent>[]>(() => [
+    {
+      accessorKey: 'full_name',
+      header: t('FullName'),
+    },
+    {
+      accessorKey: 'phone',
+      header: t('Phone'),
+    },
+    {
+      accessorKey: 'account_number',
+      header: t('AccountNumber'),
+    },
+    {
+      accessorKey: 'status',
+      header: t('Status'),
+      cell: ({ row }) => {
+        const status = row.getValue('status') as string;
+        const statusMap: Record<string, { label: string; className: string }> = {
+          ACTIVE: { label: t('Active'), className: 'bg-green-100 text-green-800' },
+          INACTIVE: { label: t('Inactive'), className: 'bg-gray-100 text-gray-800' },
+          BLOCKED: { label: t('Blocked'), className: 'bg-red-100 text-red-800' },
+          SUSPENDED: { label: t('Suspended'), className: 'bg-yellow-100 text-yellow-800' },
+        };
+        const config = statusMap[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.className}`}>
+            {config.label}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'balance',
+      header: t('Balance'),
+      cell: ({ row }) => {
+        const amount = parseFloat(String(row.getValue('balance') || 0));
+        return <span className="font-medium">{amount.toLocaleString(numberLocale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽</span>;
+      },
+    },
+    {
+      id: 'actions',
+      header: t('Actions'),
+      cell: ({ row, table }) => {
+        const abonent = row.original;
+        return (
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => (table.options.meta as any)?.onTopUp(abonent)}
+              title={t('TopUpBalance')}
+            >
+              <DollarSign className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => (table.options.meta as any)?.onChangeTariff(abonent)}
+              title={t('ChangeTariff')}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => (table.options.meta as any)?.onDeactivate(abonent)}
+              title={t('Deactivate')}
+            >
+              <PowerOff className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+      enableSorting: false,
+    },
+  ], [numberLocale, t]);
+
   const handleTopUp = (abonent: Abonent) => {
     setTopUpAbonent(abonent);
   };
 
   const handleChangeTariff = (abonent: Abonent) => {
-    toast.info('Изменение тарифа', { description: `${abonent.name || abonent.phone}` });
+    toast.info(t('TariffChange'), { description: `${abonent.full_name || abonent.phone}` });
   };
 
   const handleDeactivate = (abonent: Abonent) => {
@@ -133,7 +137,7 @@ export default function AbonentsPage() {
 
   const confirmDeactivate = () => {
     if (confirmDialog.abonent) {
-      toast.success('Абонент деактивирован', { description: `${confirmDialog.abonent.name || confirmDialog.abonent.phone}` });
+      toast.success(t('AbonentDeactivated'), { description: `${confirmDialog.abonent.full_name || confirmDialog.abonent.phone}` });
       refetch();
     }
   };
@@ -141,7 +145,7 @@ export default function AbonentsPage() {
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <h2 className="text-3xl font-bold tracking-tight">Абоненты</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('Abonents')}</h2>
         <div className="space-y-2">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -153,8 +157,8 @@ export default function AbonentsPage() {
   if (isError) {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <h2 className="text-3xl font-bold tracking-tight">Абоненты</h2>
-        <p className="text-destructive">Ошибка загрузки абонентов</p>
+        <h2 className="text-3xl font-bold tracking-tight">{t('Abonents')}</h2>
+        <p className="text-destructive">{t('AbonentsLoadError')}</p>
       </div>
     );
   }
@@ -162,35 +166,34 @@ export default function AbonentsPage() {
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Абоненты</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('Abonents')}</h2>
         <Button onClick={() => setCreateModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Добавить абонента
+          {t('AddAbonent')}
         </Button>
       </div>
       
-      {/* Фильтры */}
       <Card>
         <CardHeader>
-          <CardTitle>Фильтры</CardTitle>
+          <CardTitle>{t('Filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Статус</label>
+              <label className="text-sm font-medium">{t('Status')}</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="all">Все статусы</option>
-                <option value="ACTIVE">Активен</option>
-                <option value="INACTIVE">Неактивен</option>
-                <option value="BLOCKED">Заблокирован</option>
+                <option value="all">{t('AllStatuses')}</option>
+                <option value="ACTIVE">{t('Active')}</option>
+                <option value="INACTIVE">{t('Inactive')}</option>
+                <option value="BLOCKED">{t('Blocked')}</option>
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Мин. баланс</label>
+              <label className="text-sm font-medium">{t('MinBalance')}</label>
               <Input
                 type="number"
                 placeholder="0"
@@ -199,7 +202,7 @@ export default function AbonentsPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Макс. баланс</label>
+              <label className="text-sm font-medium">{t('MaxBalance')}</label>
               <Input
                 type="number"
                 placeholder="10000"
@@ -209,7 +212,7 @@ export default function AbonentsPage() {
             </div>
             <div className="flex items-end">
               <Button variant="outline" onClick={() => { setStatusFilter('all'); setMinBalance(''); setMaxBalance(''); }}>
-                Сбросить
+                {t('Reset')}
               </Button>
             </div>
           </div>
@@ -218,21 +221,20 @@ export default function AbonentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Список абонентов</CardTitle>
-          <CardDescription>Управление абонентами и их счетами</CardDescription>
+          <CardTitle>{t('AbonentsList')}</CardTitle>
+          <CardDescription>{t('AbonentsListDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <DataTable 
             columns={columns} 
             data={filteredAbonents} 
             searchKey="name"
-            searchPlaceholder="Поиск по ФИО, телефону или лицевому счёту..."
+            searchPlaceholder={t('SearchAbonents')}
             meta={{ onTopUp: handleTopUp, onChangeTariff: handleChangeTariff, onDeactivate: handleDeactivate }}
           />
         </CardContent>
       </Card>
 
-      {/* Modals */}
       <TopUpBalanceModal
         abonent={topUpAbonent}
         open={!!topUpAbonent}
@@ -247,9 +249,9 @@ export default function AbonentsPage() {
       <ConfirmationDialog
         open={confirmDialog.open}
         onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
-        title="Деактивация абонента"
-        description={`Вы уверены, что хотите деактивировать абонента "${confirmDialog.abonent?.name || confirmDialog.abonent?.phone}"? Это действие нельзя отменить.`}
-        confirmText="Деактивировать"
+        title={t('DeactivateAbonentTitle')}
+        description={t('DeactivateAbonentDescription', { name: confirmDialog.abonent?.full_name || confirmDialog.abonent?.phone })}
+        confirmText={t('Deactivate')}
         variant="destructive"
         onConfirm={confirmDeactivate}
       />

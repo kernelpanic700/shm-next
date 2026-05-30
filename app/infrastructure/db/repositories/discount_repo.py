@@ -37,7 +37,7 @@ class DiscountRepository(DiscountRepositoryProtocol):
     async def get_valid_at(self, dt: datetime) -> list[Discount]:
         """Получить скидки, действующие в указанный момент."""
         from datetime import UTC
-        
+
         stmt = select(DiscountModel).where(DiscountModel.is_active)
         result = await self._session.execute(stmt)
         models = result.scalars().all()
@@ -52,7 +52,7 @@ class DiscountRepository(DiscountRepositoryProtocol):
             valid_to = m.valid_to
             if valid_to and valid_to.tzinfo is None:
                 valid_to = valid_to.replace(tzinfo=UTC)
-            
+
             if valid_from and check_dt < valid_from:
                 continue
             if valid_to and check_dt > valid_to:

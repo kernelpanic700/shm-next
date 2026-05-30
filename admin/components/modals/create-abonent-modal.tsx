@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CreateAbonentModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ interface CreateAbonentModalProps {
 }
 
 export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbonentModalProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -33,7 +35,6 @@ export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbon
     setIsSubmitting(true);
     try {
       // TODO: API call to create abonent
-      console.log('Create abonent:', formData);
       onSuccess?.();
       onOpenChange(false);
       setFormData({ name: '', phone: '', email: '' });
@@ -48,25 +49,25 @@ export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbon
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Новый абонент</DialogTitle>
+          <DialogTitle>{t('NewAbonent')}</DialogTitle>
           <DialogDescription>
-            Создайте нового абонента в системе
+            {t('CreateAbonentDescription')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">ФИО</Label>
+              <Label htmlFor="name">{t('FullName')}</Label>
               <Input
                 id="name"
-                placeholder="Иванов Иван Иванович"
+                placeholder={t('FullNamePlaceholder')}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">{t('Phone')}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -77,7 +78,7 @@ export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbon
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email (необязательно)</Label>
+              <Label htmlFor="email">{t('EmailOptional')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -89,10 +90,10 @@ export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbon
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Отмена
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Создаём...' : 'Создать'}
+              {isSubmitting ? t('Creating') : t('Create')}
             </Button>
           </DialogFooter>
         </form>

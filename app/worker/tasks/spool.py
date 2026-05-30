@@ -9,8 +9,6 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from taskiq import TaskiqDepends
-
 from app.infrastructure.db.unit_of_work import UnitOfWork
 from app.infrastructure.external.action_executor import ActionExecutor
 from app.infrastructure.external.action_registry import ActionRegistry
@@ -25,9 +23,11 @@ def _calculate_execute_after(retry_count: int) -> datetime:
 
 async def process_spool_task(
     spool_task_id: UUID,
-    uow: UnitOfWork = TaskiqDepends(UnitOfWork),
+    uow: UnitOfWork | None = None,
 ) -> dict:
     """Обработать SpoolTask с полной логикой статусов и retry."""
+    if uow is None:
+        uow = UnitOfWork()
     registry = ActionRegistry()
     executor = ActionExecutor(registry=registry, uow=uow)
 

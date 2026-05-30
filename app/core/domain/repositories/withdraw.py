@@ -42,6 +42,17 @@ class WithdrawRepositoryProtocol(ABC):
         ...
 
     @abstractmethod
+    async def create_withdraw(
+        self,
+        abonent_id: UUID,
+        service_id: UUID,
+        amount: float,
+        currency: str,
+    ) -> UUID:
+        """Создать списание и вернуть его ID."""
+        ...
+
+    @abstractmethod
     async def save(self, withdraw: Withdraw) -> Withdraw:
         """Сохранить списание."""
         ...

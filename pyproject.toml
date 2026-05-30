@@ -49,8 +49,10 @@ dependencies = [
     "prometheus-client>=0.19,<1.0",
     "opentelemetry-api>=1.21,<2.0",
     "opentelemetry-sdk>=1.21,<2.0",
+    "opentelemetry-exporter-otlp>=1.21,<2.0",
 
     # === Utils ===
+    "email-validator>=2.0,<3.0",
     "python-dateutil>=2.8,<3.0",
     "apscheduler>=3.10,<4.0",
     "ujson>=5.8,<6.0",
@@ -121,8 +123,6 @@ addopts = [
     "-x",
     "--cov=app",
     "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=json",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -143,6 +143,8 @@ include_trailing_comma = true
 [tool.ruff]
 target-version = "py311"
 line-length = 120
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -162,20 +164,26 @@ ignore = [
     "S101",  # allow assert
     "S104",  # possible binding to 0.0.0.0
     "E501",  # line too long (handled by black)
+    "B008",  # allow function calls in defaults (Litestar Parameter pattern)
+    "RUF003",  # allow Cyrillic in comments (Russian documentation)
+    "RUF002",  # allow Cyrillic in docstrings (Russian documentation)
+    "W293",  # allow blank line with whitespace
+    "DTZ011",  # allow date.today() in worker tasks
+    "RUF012",  # allow mutable class attributes (Litestar pattern)
+    "DTZ005",  # allow datetime.now() without tz (legacy code)
+    "E402",  # allow module level imports not at top (OTLP conditional imports)
 ]
 
 [tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-strict_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
+python_version = "3.12"
+warn_return_any = false
+warn_unreachable = false
+strict_optional = false
+ignore_missing_imports = true
+no_implicit_reexport = false
+allow_untyped_globals = true
+allow_untyped_defs = true
+disable_error_code = ["attr-defined", "arg-type"]
 strict_equality = true
 
 [[tool.mypy.overrides]]

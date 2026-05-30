@@ -139,21 +139,21 @@ class Discount:
     def is_valid_at(self, dt: datetime) -> bool:
         """Проверяет, действует ли скидка в указанный момент времени."""
         from datetime import UTC
-        
+
         if not self._is_active:
             return False
-        
+
         # Normalize datetimes for comparison
         check_dt = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
-        
+
         valid_from = self._valid_from
         if valid_from and valid_from.tzinfo is None:
             valid_from = valid_from.replace(tzinfo=UTC)
-        
+
         valid_to = self._valid_to
         if valid_to and valid_to.tzinfo is None:
             valid_to = valid_to.replace(tzinfo=UTC)
-        
+
         if valid_from and check_dt < valid_from:
             return False
         if valid_to and check_dt > valid_to:

@@ -7,17 +7,17 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from taskiq import TaskiqDepends
-
 from app.infrastructure.db.unit_of_work import UnitOfWork
 from app.worker.brokers import broker
 
 
 async def retry_failed_spool_tasks(
     max_retries: int = 3,
-    uow: UnitOfWork = TaskiqDepends(UnitOfWork),
+    uow: UnitOfWork | None = None,
 ) -> dict:
     """Повторить неудачные SpoolTask."""
+    if uow is None:
+        uow = UnitOfWork()
     async with uow:
         failed_tasks = await uow.spool.get_failed(max_retries=max_retries)
 
@@ -31,9 +31,11 @@ async def retry_failed_spool_tasks(
 
 async def cleanup_expired_sessions(
     older_than_days: int = 30,
-    uow: UnitOfWork = TaskiqDepends(UnitOfWork),
+    uow: UnitOfWork | None = None,
 ) -> dict:
     """Очистить просроченные сессии."""
+    if uow is None:
+        uow = UnitOfWork()
     async with uow:
         cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
         deleted = await uow.sessions.delete_expired(cutoff)
@@ -42,5 +44,5 @@ async def cleanup_expired_sessions(
 
 
 # Taskiq задачи
-retry_failed_spool_tasks_task = broker.task(retry_failed_spool_tasks)
-cleanup_expired_sessions_task = broker.task(cleanup_expired_sessions)
+retry_failed_spool_tasks_task = broker.task(retry_failed_spool_tasks, crontab="0 * * * *")  # Каждый час
+cleanup_expired_sessions_task = broker.task(cleanup_expired_sessions, crontab="0 3 * * *")  # Каждый день в 3:00

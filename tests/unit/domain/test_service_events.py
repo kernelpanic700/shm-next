@@ -11,6 +11,7 @@ from app.core.domain.events.service_events import (
     ServiceActivatedEvent,
     ServiceDeactivatedEvent,
     ServiceErrorEvent,
+    ServiceRenewedEvent,
 )
 from app.core.domain.value_objects.event_type import EventType
 
@@ -44,6 +45,19 @@ class TestServiceDeactivatedEvent:
             service_type="voice",
         )
         assert event.reason == ""
+
+
+class TestServiceRenewedEvent:
+    def test_create(self):
+        event = ServiceRenewedEvent(
+            abonent_id=str(uuid4()),
+            service_id=str(uuid4()),
+            service_type="internet",
+            catalog_service_id=str(uuid4()),
+        )
+        assert event.event_type == EventType.SERVICE_RENEWED
+        assert event.service_type == "internet"
+        assert event.catalog_service_id is not None
 
 
 class TestServiceErrorEvent:

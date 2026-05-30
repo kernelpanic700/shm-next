@@ -42,6 +42,16 @@ class PaymentRepositoryProtocol(ABC):
         ...
 
     @abstractmethod
+    async def get_all(
+        self,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None,
+        limit: int = 50,
+    ) -> list:
+        """Получить все платежи."""
+        ...
+
+    @abstractmethod
     async def confirm(self, payment_id: UUID) -> bool:
         """Подтвердить платёж."""
         ...
