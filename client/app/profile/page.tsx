@@ -48,8 +48,14 @@ export default function ProfilePage() {
               <Field label={t("fullName")} value={abonent?.full_name} />
               <Field label={t("phone")} value={abonent?.phone} />
               <Field label={t("email")} value={abonent?.email || t("noEmail")} />
+              <Field label="Login" value={abonent?.login} />
+              <Field label="Contract" value={abonent?.contract ?? abonent?.account_number} />
               <Field label={t("status")} value={abonent?.status} />
               <Field label={t("accountNumber")} value={abonent?.account_number ?? abonent?.id} />
+              <Field label="Discount" value={abonent?.discount} />
+              <Field label="Credit" value={abonent?.credit} />
+              <Field label="Bonus" value={abonent?.bonus} />
+              <Field label="Verified" value={abonent?.verified ? "yes" : "no"} />
               <Field label={t("role")} value={abonent?.role ?? t("subscriber")} />
             </div>
           )}

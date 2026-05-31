@@ -156,10 +156,17 @@ export default function AbonentDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <p><strong>{t('AccountNumber')}:</strong> {abonent.account_number || '-'}</p>
+              <p><strong>Login:</strong> {abonent.login || '-'}</p>
+              <p><strong>Login2:</strong> {abonent.login2 || '-'}</p>
               <p><strong>{t('Phone')}:</strong> {abonent.phone}</p>
               <p><strong>Email:</strong> {abonent.email || '-'}</p>
               <p><strong>{t('Address')}:</strong> {abonent.address || '-'}</p>
               <p><strong>{t('Status')}:</strong> {abonent.status}</p>
+              <p><strong>Contract:</strong> {abonent.contract || '-'}</p>
+              <p><strong>Discount:</strong> {abonent.discount ?? 0}%</p>
+              <p><strong>Credit:</strong> {Number(abonent.credit || 0).toLocaleString(numberLocale, { minimumFractionDigits: 2 })} ₽</p>
+              <p><strong>Bonus:</strong> {Number(abonent.bonus || 0).toLocaleString(numberLocale, { minimumFractionDigits: 2 })} ₽</p>
+              <p><strong>Verified:</strong> {abonent.verified ? t('Active') : t('Inactive')}</p>
               <p><strong>{t('Balance')}:</strong> {parseFloat(String(abonent.balance || 0)).toLocaleString(numberLocale, { minimumFractionDigits: 2 })} ₽</p>
             </CardContent>
           </Card>

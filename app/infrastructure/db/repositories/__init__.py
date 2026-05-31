@@ -2,6 +2,7 @@
 # shm-next — Repository Implementations
 # =============================================================================
 from app.infrastructure.db.repositories.abonent_repo import AbonentRepository
+from app.infrastructure.db.repositories.abonent_profile_repo import AbonentProfileRepository, AbonentStorageRepository
 from app.infrastructure.db.repositories.audit_log_repo import AuditLogRepository
 from app.infrastructure.db.repositories.billing_repo import BillingRepository
 from app.infrastructure.db.repositories.bonus_entry_repo import BonusEntryRepository
@@ -21,6 +22,8 @@ from app.infrastructure.db.repositories.withdraw_repo import WithdrawRepository
 
 __all__ = [
     "AbonentRepository",
+    "AbonentProfileRepository",
+    "AbonentStorageRepository",
     "AuditLogRepository",
     "BillingRepository",
     "BonusEntryRepository",

@@ -48,10 +48,21 @@ class AbonentCreateRequest(BaseModel):
     full_name: constr(min_length=2, max_length=255)
     phone: constr(min_length=10, max_length=20)
     account_number: constr(min_length=1, max_length=20)
+    login: str | None = Field(default=None, min_length=1, max_length=128)
+    login2: str | None = Field(default=None, min_length=1, max_length=128)
+    email: EmailStr | None = None
     balance: float = 0
     currency: str = "RUB"
     allow_negative: bool = False
     tariff_id: UUID | None = None
+    partner_id: UUID | None = None
+    discount: float = Field(default=0, ge=0, le=100)
+    credit: float = Field(default=0, ge=0)
+    bonus: float = Field(default=0, ge=0)
+    comment: str | None = Field(default=None, max_length=2000)
+    contract: str | None = Field(default=None, max_length=32)
+    can_overdraft: bool = False
+    verified: bool = False
     metadata: dict | None = None
 
 
@@ -72,9 +83,20 @@ class AbonentUpdateRequest(BaseModel):
     """Запрос на обновление абонента."""
     full_name: constr(min_length=2, max_length=255) | None = None
     phone: constr(min_length=10, max_length=20) | None = None
+    login: str | None = Field(default=None, min_length=1, max_length=128)
+    login2: str | None = Field(default=None, min_length=1, max_length=128)
+    email: EmailStr | None = None
     status: str | None = None
     tariff_id: UUID | None = None
     allow_negative: bool | None = None
+    partner_id: UUID | None = None
+    discount: float | None = Field(default=None, ge=0, le=100)
+    credit: float | None = Field(default=None, ge=0)
+    bonus: float | None = Field(default=None, ge=0)
+    comment: str | None = Field(default=None, max_length=2000)
+    contract: str | None = Field(default=None, max_length=32)
+    can_overdraft: bool | None = None
+    verified: bool | None = None
     metadata: dict | None = None
 
 
@@ -87,6 +109,19 @@ class AbonentFilter(BaseModel):
     tariff_id: UUID | None = None
     min_balance: float | None = None
     max_balance: float | None = None
+
+
+class AbonentProfileUpsertRequest(BaseModel):
+    """SHM-style arbitrary JSON profile."""
+    data: dict = Field(default_factory=dict)
+
+
+class AbonentStorageUpsertRequest(BaseModel):
+    """SHM-style per-abonent named storage item."""
+    data: dict | str
+    content_type: str = Field(default="application/json", max_length=128)
+    user_service_id: UUID | None = None
+    settings: dict | None = None
 
 
 # === Payments ===

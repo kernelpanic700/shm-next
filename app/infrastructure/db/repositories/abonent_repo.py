@@ -75,6 +75,8 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
             # Обновляем существующую модель
             model.full_name = abonent.full_name
             model.phone = abonent.phone
+            model.login = abonent.login
+            model.login2 = abonent.login2
             model.email = abonent.email
             model.account_number = abonent.account_number
             model.balance = float(abonent.balance.amount)
@@ -82,6 +84,15 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
             model.status = abonent.status.value
             model.allow_negative = abonent.allow_negative
             model.tariff_id = abonent.tariff_id
+            model.partner_id = abonent.partner_id
+            model.discount = abonent.discount
+            model.credit = abonent.credit
+            model.bonus = abonent.bonus
+            model.comment = abonent.comment
+            model.contract = abonent.contract
+            model.can_overdraft = abonent.can_overdraft
+            model.verified = abonent.verified
+            model.settings = abonent.settings
             model.password_hash = abonent.password_hash
             model.version = abonent.version
         else:
@@ -90,6 +101,8 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
                 id=abonent.id,
                 full_name=abonent.full_name,
                 phone=abonent.phone,
+                login=abonent.login,
+                login2=abonent.login2,
                 email=abonent.email,
                 account_number=abonent.account_number,
                 balance=float(abonent.balance.amount),
@@ -97,6 +110,15 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
                 status=abonent.status.value,
                 allow_negative=abonent.allow_negative,
                 tariff_id=abonent.tariff_id,
+                partner_id=abonent.partner_id,
+                discount=abonent.discount,
+                credit=abonent.credit,
+                bonus=abonent.bonus,
+                comment=abonent.comment,
+                contract=abonent.contract,
+                can_overdraft=abonent.can_overdraft,
+                verified=abonent.verified,
+                settings=abonent.settings,
                 password_hash=abonent.password_hash,
                 version=abonent.version,
             )
@@ -120,12 +142,23 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
             id=model.id,
             full_name=model.full_name,
             phone=model.phone,
+            login=model.login,
+            login2=model.login2,
             email=model.email,
             account_number=model.account_number,
             balance=Money(model.balance, model.currency),
             status=AbonentStatus(model.status),
             allow_negative=model.allow_negative,
             tariff_id=model.tariff_id,
+            partner_id=model.partner_id,
+            discount=float(model.discount or 0),
+            credit=float(model.credit or 0),
+            bonus=float(model.bonus or 0),
+            comment=model.comment,
+            contract=model.contract,
+            can_overdraft=model.can_overdraft,
+            verified=model.verified,
+            settings=model.settings or {},
             password_hash=model.password_hash,
             created_at=model.created_at,
             updated_at=model.updated_at,

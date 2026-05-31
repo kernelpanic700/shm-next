@@ -30,6 +30,7 @@ from app.api.dto.responses import (
 )
 from app.infrastructure.db.models import CommandTemplateModel, ServerGroupModel, ServerModel, SSHKeyModel
 from app.infrastructure.db.unit_of_work import UnitOfWork
+from app.infrastructure.security.secret_crypto import encrypt_secret
 
 
 def _list_response(items: list, response_model: type) -> AutomationListResponse:
@@ -52,7 +53,10 @@ class AutomationController(Controller):
 
     @post("/ssh-keys", summary="Create SSH key", status_code=HTTP_201_CREATED)
     async def create_ssh_key(self, data: SSHKeyCreateRequest, uow: UnitOfWork) -> SSHKeyResponse:
-        model = SSHKeyModel(**data.model_dump())
+        payload = data.model_dump()
+        payload["private_key"] = encrypt_secret(payload["private_key"])
+        payload["passphrase"] = encrypt_secret(payload.get("passphrase"))
+        model = SSHKeyModel(**payload)
         saved = await uow.ssh_keys.save(model)
         await uow.commit()
         return SSHKeyResponse.model_validate(saved, from_attributes=True)
@@ -62,7 +66,12 @@ class AutomationController(Controller):
         model = await uow.ssh_keys.get(key_id)
         if model is None:
             raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail="SSH key not found")
-        for field, value in data.model_dump(exclude_unset=True).items():
+        payload = data.model_dump(exclude_unset=True)
+        if "private_key" in payload:
+            payload["private_key"] = encrypt_secret(payload["private_key"])
+        if "passphrase" in payload:
+            payload["passphrase"] = encrypt_secret(payload["passphrase"])
+        for field, value in payload.items():
             setattr(model, field, value)
         model.version += 1
         saved = await uow.ssh_keys.save(model)

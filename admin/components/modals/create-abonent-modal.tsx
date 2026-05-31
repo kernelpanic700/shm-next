@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { useCreateAbonent } from '@/lib/hooks/use-abonents';
 
 interface CreateAbonentModalProps {
   open: boolean;
@@ -24,20 +26,35 @@ interface CreateAbonentModalProps {
 export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbonentModalProps) {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    name: '',
+    full_name: '',
     phone: '',
     email: '',
+    account_number: '',
+    login: '',
+    contract: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createAbonent = useCreateAbonent();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // TODO: API call to create abonent
+      await createAbonent.mutateAsync({
+        full_name: formData.full_name,
+        phone: formData.phone,
+        email: formData.email || undefined,
+        account_number: formData.account_number,
+        login: formData.login || formData.phone,
+        contract: formData.contract || formData.account_number,
+        currency: 'RUB',
+        balance: 0,
+        status: 'ACTIVE',
+      });
+      toast.success(t('Created'));
       onSuccess?.();
       onOpenChange(false);
-      setFormData({ name: '', phone: '', email: '' });
+      setFormData({ full_name: '', phone: '', email: '', account_number: '', login: '', contract: '' });
     } catch (error) {
       console.error('Failed to create abonent:', error);
     } finally {
@@ -57,13 +74,30 @@ export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbon
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{t('FullName')}</Label>
+              <Label htmlFor="full_name">{t('FullName')}</Label>
               <Input
-                id="name"
+                id="full_name"
                 placeholder={t('FullNamePlaceholder')}
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="account_number">{t('AccountNumber')}</Label>
+              <Input
+                id="account_number"
+                value={formData.account_number}
+                onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login">Login</Label>
+              <Input
+                id="login"
+                value={formData.login}
+                onChange={(e) => setFormData({ ...formData, login: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -85,6 +119,14 @@ export function CreateAbonentModal({ open, onOpenChange, onSuccess }: CreateAbon
                 placeholder="ivanov@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contract">Contract</Label>
+              <Input
+                id="contract"
+                value={formData.contract}
+                onChange={(e) => setFormData({ ...formData, contract: e.target.value })}
               />
             </div>
           </div>

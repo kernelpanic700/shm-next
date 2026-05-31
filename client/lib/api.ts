@@ -61,10 +61,19 @@ export default api;
 export interface Abonent {
   id: string;
   phone: string;
+  login?: string | null;
+  login2?: string | null;
   email?: string;
   full_name: string;
+  account_number?: string;
   balance: number;
+  currency?: string;
   status: string;
+  discount?: number;
+  credit?: number;
+  bonus?: number;
+  contract?: string | null;
+  verified?: boolean;
 }
 
 export interface Payment {

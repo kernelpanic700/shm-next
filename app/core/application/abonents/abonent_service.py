@@ -81,10 +81,22 @@ class AbonentService:
         abonent = Abonent(
             full_name=data.full_name,
             phone=data.phone,
+            login=data.login or data.phone,
+            login2=data.login2 or data.email,
+            email=data.email,
             account_number=data.account_number,
             balance=balance,
             allow_negative=data.allow_negative,
             tariff_id=data.tariff_id,
+            partner_id=data.partner_id,
+            discount=data.discount,
+            credit=data.credit,
+            bonus=data.bonus,
+            comment=data.comment,
+            contract=data.contract or data.account_number,
+            can_overdraft=data.can_overdraft,
+            verified=data.verified,
+            settings=data._meta,
         )
 
         # Сохраняем в БД
@@ -194,6 +206,24 @@ class AbonentService:
             abonent._phone = data.phone
             changes["phone"] = data.phone
 
+        for attr in (
+            "email",
+            "login",
+            "login2",
+            "partner_id",
+            "discount",
+            "credit",
+            "bonus",
+            "comment",
+            "contract",
+            "can_overdraft",
+            "verified",
+        ):
+            value = getattr(data, attr)
+            if value is not None:
+                setattr(abonent, f"_{attr}", value)
+                changes[attr] = str(value) if attr == "partner_id" else value
+
         if data.status is not None:
             new_status = AbonentStatus(data.status)
             abonent._status = new_status
@@ -206,6 +236,10 @@ class AbonentService:
         if data.allow_negative is not None:
             abonent._allow_negative = data.allow_negative
             changes["allow_negative"] = data.allow_negative
+
+        if data._meta is not None:
+            abonent._settings = data._meta
+            changes["settings"] = data._meta
 
         # Сохраняем
         saved = await self._abonent_repo.save(abonent)

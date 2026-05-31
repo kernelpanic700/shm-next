@@ -19,6 +19,10 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.db.repositories.abonent_repo import AbonentRepository
+from app.infrastructure.db.repositories.abonent_profile_repo import (
+    AbonentProfileRepository,
+    AbonentStorageRepository,
+)
 from app.infrastructure.db.repositories.audit_log_repo import AuditLogRepository
 from app.infrastructure.db.repositories.automation_repo import (
     CommandTemplateRepository,
@@ -54,6 +58,8 @@ class UnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
         self._abonent_repo: AbonentRepository | None = None
+        self._abonent_profile_repo: AbonentProfileRepository | None = None
+        self._abonent_storage_repo: AbonentStorageRepository | None = None
         self._service_repo: ServiceRepository | None = None
         self._tariff_repo: TariffRepository | None = None
         self._payment_repo: PaymentRepository | None = None
@@ -80,6 +86,18 @@ class UnitOfWork:
         if self._abonent_repo is None:
             self._abonent_repo = AbonentRepository(self._session)
         return self._abonent_repo
+
+    @property
+    def abonent_profiles(self) -> AbonentProfileRepository:
+        if self._abonent_profile_repo is None:
+            self._abonent_profile_repo = AbonentProfileRepository(self._session)
+        return self._abonent_profile_repo
+
+    @property
+    def abonent_storage(self) -> AbonentStorageRepository:
+        if self._abonent_storage_repo is None:
+            self._abonent_storage_repo = AbonentStorageRepository(self._session)
+        return self._abonent_storage_repo
 
     @property
     def services(self) -> ServiceRepository:

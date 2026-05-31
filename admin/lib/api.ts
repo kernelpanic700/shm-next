@@ -62,12 +62,23 @@ export interface Abonent {
   full_name: string;
   name?: string;
   phone: string;
+  login?: string | null;
+  login2?: string | null;
   account_number?: string;
   email?: string;
   address?: string;
   status: 'active' | 'inactive' | 'suspended' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'SUSPENDED';
   balance: number;
   currency: string;
+  partner_id?: string | null;
+  discount?: number;
+  credit?: number;
+  bonus?: number;
+  comment?: string | null;
+  contract?: string | null;
+  can_overdraft?: boolean;
+  verified?: boolean;
+  settings?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }

@@ -7,7 +7,7 @@
 Все модели наследуются от Base и используют asyncpg как драйвер.
 """
 
-from app.infrastructure.db.models.abonent import AbonentModel
+from app.infrastructure.db.models.abonent import AbonentModel, AbonentProfileModel, AbonentStorageModel
 from app.infrastructure.db.models.audit_log import AuditLogModel
 from app.infrastructure.db.models.base import Base
 from app.infrastructure.db.models.bonus_entry import BonusEntryModel
@@ -27,6 +27,8 @@ from app.infrastructure.db.models.withdraw import WithdrawModel
 
 __all__ = [
     "AbonentModel",
+    "AbonentProfileModel",
+    "AbonentStorageModel",
     "AuditLogModel",
     "Base",
     "BonusEntryModel",

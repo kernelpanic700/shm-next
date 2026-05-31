@@ -9,6 +9,7 @@ from uuid import UUID
 
 from app.infrastructure.db.unit_of_work import UnitOfWork
 from app.infrastructure.external.action_registry import ActionRegistry
+from app.infrastructure.security.secret_crypto import decrypt_secret
 
 
 class _SafeDict(dict):
@@ -88,7 +89,9 @@ async def execute_ssh(uow: UnitOfWork, **payload: Any) -> dict[str, Any]:
 
     username, host = _split_host(server.host)
     rendered_cmd = _render_template(cmd, payload)
-    client_keys = [asyncssh.import_private_key(key.private_key, passphrase=key.passphrase)]
+    private_key = decrypt_secret(key.private_key)
+    passphrase = decrypt_secret(key.passphrase)
+    client_keys = [asyncssh.import_private_key(private_key, passphrase=passphrase)]
 
     connect_kwargs: dict[str, Any] = {
         "host": host,

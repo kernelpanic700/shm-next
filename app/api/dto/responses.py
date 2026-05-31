@@ -90,12 +90,24 @@ class AbonentResponse(BaseModel):
     id: UUID
     full_name: str
     phone: str
+    login: str | None = None
+    login2: str | None = None
+    email: str | None = None
     account_number: str
     balance: float
     currency: str
     status: str
     tariff_id: UUID | None = None
     allow_negative: bool
+    partner_id: UUID | None = None
+    discount: float = 0
+    credit: float = 0
+    bonus: float = 0
+    comment: str | None = None
+    contract: str | None = None
+    can_overdraft: bool = False
+    verified: bool = False
+    settings: dict = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
 
@@ -125,12 +137,24 @@ class AbonentResponse(BaseModel):
                 'id': data.id,
                 'full_name': data.full_name,
                 'phone': data.phone,
+                'login': data.login,
+                'login2': data.login2,
+                'email': data.email,
                 'account_number': data.account_number,
                 'balance': balance_val,
                 'currency': currency_val,
                 'status': status_val,
                 'tariff_id': data.tariff_id,
                 'allow_negative': data.allow_negative,
+                'partner_id': data.partner_id,
+                'discount': data.discount,
+                'credit': data.credit,
+                'bonus': data.bonus,
+                'comment': data.comment,
+                'contract': data.contract,
+                'can_overdraft': data.can_overdraft,
+                'verified': data.verified,
+                'settings': data.settings,
                 'created_at': data.created_at,
                 'updated_at': data.updated_at,
             }
@@ -157,17 +181,74 @@ class AbonentResponse(BaseModel):
                 'id': getattr(data, 'id', None),
                 'full_name': getattr(data, 'full_name', ''),
                 'phone': getattr(data, 'phone', ''),
+                'login': getattr(data, 'login', None),
+                'login2': getattr(data, 'login2', None),
+                'email': getattr(data, 'email', None),
                 'account_number': getattr(data, 'account_number', ''),
                 'balance': balance_val,
                 'currency': currency_val,
                 'status': status_val,
                 'tariff_id': getattr(data, 'tariff_id', None),
                 'allow_negative': getattr(data, 'allow_negative', False),
+                'partner_id': getattr(data, 'partner_id', None),
+                'discount': float(getattr(data, 'discount', 0) or 0),
+                'credit': float(getattr(data, 'credit', 0) or 0),
+                'bonus': float(getattr(data, 'bonus', 0) or 0),
+                'comment': getattr(data, 'comment', None),
+                'contract': getattr(data, 'contract', None),
+                'can_overdraft': getattr(data, 'can_overdraft', False),
+                'verified': getattr(data, 'verified', False),
+                'settings': getattr(data, 'settings', None) or {},
                 'created_at': getattr(data, 'created_at', None),
                 'updated_at': getattr(data, 'updated_at', None),
             }
 
         return data
+
+
+class AbonentProfileResponse(BaseModel):
+    abonent_id: UUID
+    data: dict
+    created_at: datetime
+    updated_at: datetime
+
+
+class AbonentStorageResponse(BaseModel):
+    abonent_id: UUID
+    name: str
+    user_service_id: UUID | None = None
+    data: dict | str | None = None
+    content_type: str | None = None
+    settings: dict | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_storage(cls, data):
+        if isinstance(data, dict):
+            return data
+        if hasattr(data, "__dict__"):
+            from app.infrastructure.db.repositories.abonent_profile_repo import (
+                AbonentStorageRepository,
+            )
+
+            return {
+                "abonent_id": getattr(data, "abonent_id", None),
+                "name": getattr(data, "name", ""),
+                "user_service_id": getattr(data, "user_service_id", None),
+                "data": AbonentStorageRepository.unpack_data(data),
+                "content_type": getattr(data, "content_type", None),
+                "settings": getattr(data, "settings", None),
+                "created_at": getattr(data, "created_at", None),
+                "updated_at": getattr(data, "updated_at", None),
+            }
+        return data
+
+
+class AbonentStorageListResponse(BaseModel):
+    items: list[AbonentStorageResponse]
+    total: int
 
 
 class TariffResponse(BaseModel):

@@ -20,8 +20,20 @@ from litestar.status_codes import (
 )
 
 from app.api.dependencies import get_abonent_service, provide_uow_dependency
-from app.api.dto.requests import AbonentCreateRequest, AbonentUpdateRequest, BalanceTopUpRequest
-from app.api.dto.responses import AbonentListResponse, AbonentResponse
+from app.api.dto.requests import (
+    AbonentCreateRequest,
+    AbonentProfileUpsertRequest,
+    AbonentStorageUpsertRequest,
+    AbonentUpdateRequest,
+    BalanceTopUpRequest,
+)
+from app.api.dto.responses import (
+    AbonentListResponse,
+    AbonentProfileResponse,
+    AbonentResponse,
+    AbonentStorageListResponse,
+    AbonentStorageResponse,
+)
 from app.core.application.abonents.abonent_service import AbonentService
 from app.core.domain.entities.abonent import AbonentCreate, AbonentUpdate
 from app.infrastructure.db.unit_of_work import UnitOfWork
@@ -154,6 +166,17 @@ class AbonentController(Controller):
                         currency=data.currency,
                         allow_negative=data.allow_negative,
                         tariff_id=data.tariff_id,
+                        email=data.email,
+                        login=data.login,
+                        login2=data.login2,
+                        partner_id=data.partner_id,
+                        discount=data.discount,
+                        credit=data.credit,
+                        bonus=data.bonus,
+                        comment=data.comment,
+                        contract=data.contract,
+                        can_overdraft=data.can_overdraft,
+                        verified=data.verified,
                         metadata=data.metadata,
                     )
                 )
@@ -189,6 +212,17 @@ class AbonentController(Controller):
                         status=data.status,
                         tariff_id=data.tariff_id,
                         allow_negative=data.allow_negative,
+                        email=data.email,
+                        login=data.login,
+                        login2=data.login2,
+                        partner_id=data.partner_id,
+                        discount=data.discount,
+                        credit=data.credit,
+                        bonus=data.bonus,
+                        comment=data.comment,
+                        contract=data.contract,
+                        can_overdraft=data.can_overdraft,
+                        verified=data.verified,
                         metadata=data.metadata,
                     ),
                 )
@@ -204,6 +238,93 @@ class AbonentController(Controller):
                 )
             await uow.commit()
             return AbonentResponse.model_validate(saved, from_attributes=True)
+
+    @get(
+        path="/{abonent_id:uuid}/profile",
+        summary="Получить JSON-профиль абонента",
+        response_model=AbonentProfileResponse,
+    )
+    async def get_profile(self, abonent_id: UUID, uow: UnitOfWork) -> AbonentProfileResponse:
+        profile = await uow.abonent_profiles.get_by_abonent(abonent_id)
+        if profile is None:
+            profile = await uow.abonent_profiles.upsert(abonent_id, {})
+            await uow.commit()
+        return AbonentProfileResponse.model_validate(profile, from_attributes=True)
+
+    @post(
+        path="/{abonent_id:uuid}/profile",
+        summary="Создать или обновить JSON-профиль абонента",
+        response_model=AbonentProfileResponse,
+    )
+    async def upsert_profile(
+        self,
+        abonent_id: UUID,
+        data: AbonentProfileUpsertRequest,
+        uow: UnitOfWork,
+    ) -> AbonentProfileResponse:
+        if await uow.abonents.get(abonent_id) is None:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=f"Abonent {abonent_id} not found")
+        profile = await uow.abonent_profiles.upsert(abonent_id, data.data)
+        await uow.commit()
+        return AbonentProfileResponse.model_validate(profile, from_attributes=True)
+
+    @get(
+        path="/{abonent_id:uuid}/storage",
+        summary="Список записей хранилища абонента",
+        response_model=AbonentStorageListResponse,
+    )
+    async def list_storage(self, abonent_id: UUID, uow: UnitOfWork) -> AbonentStorageListResponse:
+        items = await uow.abonent_storage.list_by_abonent(abonent_id)
+        return AbonentStorageListResponse(
+            items=[AbonentStorageResponse.model_validate(item, from_attributes=True) for item in items],
+            total=len(items),
+        )
+
+    @get(
+        path="/{abonent_id:uuid}/storage/{name:str}",
+        summary="Получить запись хранилища абонента",
+        response_model=AbonentStorageResponse,
+    )
+    async def get_storage(self, abonent_id: UUID, name: str, uow: UnitOfWork) -> AbonentStorageResponse:
+        item = await uow.abonent_storage.get_item(abonent_id, name)
+        if item is None:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=f"Storage item {name} not found")
+        return AbonentStorageResponse.model_validate(item, from_attributes=True)
+
+    @post(
+        path="/{abonent_id:uuid}/storage/{name:str}",
+        summary="Создать или обновить запись хранилища абонента",
+        response_model=AbonentStorageResponse,
+    )
+    async def upsert_storage(
+        self,
+        abonent_id: UUID,
+        name: str,
+        data: AbonentStorageUpsertRequest,
+        uow: UnitOfWork,
+    ) -> AbonentStorageResponse:
+        if await uow.abonents.get(abonent_id) is None:
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=f"Abonent {abonent_id} not found")
+        item = await uow.abonent_storage.upsert(
+            abonent_id=abonent_id,
+            name=name,
+            data=data.data,
+            content_type=data.content_type,
+            user_service_id=data.user_service_id,
+            settings=data.settings,
+        )
+        await uow.commit()
+        return AbonentStorageResponse.model_validate(item, from_attributes=True)
+
+    @delete(
+        path="/{abonent_id:uuid}/storage/{name:str}",
+        summary="Удалить запись хранилища абонента",
+        status_code=HTTP_204_NO_CONTENT,
+    )
+    async def delete_storage(self, abonent_id: UUID, name: str, uow: UnitOfWork) -> None:
+        if not await uow.abonent_storage.delete_item(abonent_id, name):
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND, detail=f"Storage item {name} not found")
+        await uow.commit()
 
     @delete(
         path="/{abonent_id:uuid}",

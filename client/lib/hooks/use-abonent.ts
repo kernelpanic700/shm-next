@@ -7,11 +7,18 @@ export interface CurrentAbonent {
   id: string;
   phone: string;
   full_name: string;
+  login?: string | null;
+  login2?: string | null;
   email?: string | null;
   account_number?: string;
   balance?: number;
   currency?: string;
   status?: string;
+  discount?: number;
+  credit?: number;
+  bonus?: number;
+  contract?: string | null;
+  verified?: boolean;
   role?: string;
 }
 
