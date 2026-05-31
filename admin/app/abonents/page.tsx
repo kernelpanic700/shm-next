@@ -6,7 +6,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, DollarSign, PowerOff, RefreshCw } from 'lucide-react';
+import { Plus, DollarSign, PowerOff, RefreshCw, Pencil } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { useAbonents } from '@/lib/hooks/use-abonents';
 import { ColumnDef } from '@tanstack/react-table';
@@ -93,6 +93,14 @@ export default function AbonentsPage() {
         const abonent = row.original;
         return (
           <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.location.href = `/abonents/detail?id=${abonent.id}&tab=settings`}
+              title={t('Edit')}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"

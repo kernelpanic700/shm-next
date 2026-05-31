@@ -10,7 +10,7 @@ import { usePayments } from '@/lib/hooks/use-payments';
 import { useAbonentServices } from '@/lib/hooks/use-abonent-services';
 import { TopUpBalanceModal, ChangeTariffModal } from '@/components/modals';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { ArrowLeft, DollarSign, RefreshCw, PowerOff, Save } from 'lucide-react';
+import { ArrowLeft, DollarSign, RefreshCw, PowerOff, Save, Pencil } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Abonent, Payment, Service } from '@/lib/api';
@@ -59,6 +59,7 @@ export default function AbonentDetailPage() {
   const [abonentId, setAbonentId] = useState('');
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [changeTariffModalOpen, setChangeTariffModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('info');
   const [deactivateDialog, setDeactivateDialog] = useState<{ open: boolean; abonent: any | null }>({ open: false, abonent: null });
   const [formData, setFormData] = useState<AbonentFormData>({
     full_name: '',
@@ -82,6 +83,7 @@ export default function AbonentDetailPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setAbonentId(params.get('id') || '');
+    setActiveTab(params.get('tab') || 'info');
   }, []);
 
   const { data: abonent, isLoading: abonentLoading, isError: abonentError, refetch } = useAbonent(abonentId);
@@ -243,13 +245,16 @@ export default function AbonentDetailPage() {
           <Button variant="outline" onClick={() => setChangeTariffModalOpen(true)}>
             <RefreshCw className="mr-2 h-4 w-4" /> {t('ChangeTariff')}
           </Button>
+          <Button variant="outline" onClick={() => setActiveTab('settings')}>
+            <Pencil className="mr-2 h-4 w-4" /> {t('Edit')}
+          </Button>
           <Button variant="destructive" onClick={handleDeactivate}>
             <PowerOff className="mr-2 h-4 w-4" /> {t('Deactivate')}
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="info" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="info">{t('BasicInfo')}</TabsTrigger>
           <TabsTrigger value="settings">{t('AbonentSettings')}</TabsTrigger>
