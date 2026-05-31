@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, DollarSign, PowerOff, RefreshCw, Pencil } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
-import { useAbonents } from '@/lib/hooks/use-abonents';
+import { useAbonents, useDeleteAbonent } from '@/lib/hooks/use-abonents';
 import { ColumnDef } from '@tanstack/react-table';
 import { Abonent } from '@/lib/api';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ export default function AbonentsPage() {
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; abonent: Abonent | null }>({ open: false, abonent: null });
   
   const { data: abonents = [], isLoading, isError, refetch } = useAbonents();
+  const deleteAbonent = useDeleteAbonent();
   const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
 
   const filteredAbonents = useMemo(() => {
@@ -144,9 +145,16 @@ export default function AbonentsPage() {
     setConfirmDialog({ open: true, abonent });
   };
 
-  const confirmDeactivate = () => {
+  const confirmDeactivate = async () => {
     if (confirmDialog.abonent) {
-      toast.success(t('AbonentDeactivated'), { description: `${confirmDialog.abonent.full_name || confirmDialog.abonent.phone}` });
+      try {
+        await deleteAbonent.mutateAsync(confirmDialog.abonent.id);
+        toast.success(t('AbonentDeactivated'), { description: `${confirmDialog.abonent.full_name || confirmDialog.abonent.phone}` });
+      } catch (error: any) {
+        toast.error(t('AbonentDeactivateFailed'), {
+          description: error.response?.data?.detail || error.message,
+        });
+      }
       refetch();
     }
   };

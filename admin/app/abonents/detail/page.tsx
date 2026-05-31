@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAbonent, useAbonentProfile, useUpdateAbonent, useUpdateAbonentProfile } from '@/lib/hooks/use-abonents';
+import { useAbonent, useAbonentProfile, useDeleteAbonent, useUpdateAbonent, useUpdateAbonentProfile } from '@/lib/hooks/use-abonents';
 import { usePayments } from '@/lib/hooks/use-payments';
 import { useAbonentServices } from '@/lib/hooks/use-abonent-services';
 import { TopUpBalanceModal, ChangeTariffModal } from '@/components/modals';
@@ -90,6 +90,7 @@ export default function AbonentDetailPage() {
   const { data: profile } = useAbonentProfile(abonentId);
   const updateAbonent = useUpdateAbonent();
   const updateProfile = useUpdateAbonentProfile();
+  const deleteAbonent = useDeleteAbonent();
   const { data: payments = [], isLoading: paymentsLoading } = usePayments(abonentId);
   const { data: abonentServices = [], isLoading: servicesLoading } = useAbonentServices(abonentId);
   const dateLocale = getDateLocale(i18n.language);
@@ -189,11 +190,13 @@ export default function AbonentDetailPage() {
   const confirmDeactivate = async () => {
     if (!deactivateDialog.abonent) return;
     try {
-      await fetch(`/api/abonents/${deactivateDialog.abonent.id}/deactivate`, { method: 'POST' });
+      await deleteAbonent.mutateAsync(deactivateDialog.abonent.id);
       toast.success(t('AbonentDeactivated'));
       refetch();
-    } catch {
-      toast.error(t('AbonentDeactivateFailed'));
+    } catch (error: any) {
+      toast.error(t('AbonentDeactivateFailed'), {
+        description: error.response?.data?.detail || error.message,
+      });
     }
   };
 
@@ -373,8 +376,8 @@ export default function AbonentDetailPage() {
         </TabsContent>
       </Tabs>
 
-      <TopUpBalanceModal abonent={abonent} open={topUpModalOpen} onOpenChange={setTopUpModalOpen} />
-      <ChangeTariffModal abonent={abonent} open={changeTariffModalOpen} onOpenChange={setChangeTariffModalOpen} />
+      <TopUpBalanceModal abonent={abonent} open={topUpModalOpen} onOpenChange={setTopUpModalOpen} onSuccess={refetch} />
+      <ChangeTariffModal abonent={abonent} open={changeTariffModalOpen} onOpenChange={setChangeTariffModalOpen} onSuccess={refetch} />
       <ConfirmationDialog
         open={deactivateDialog.open}
         onOpenChange={(open) => setDeactivateDialog({ ...deactivateDialog, open })}

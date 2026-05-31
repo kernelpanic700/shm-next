@@ -19,7 +19,7 @@ interface ConfirmationDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
 }
 
 export function ConfirmationDialog({
@@ -48,8 +48,8 @@ export function ConfirmationDialog({
           </Button>
           <Button
             variant={variant === 'destructive' ? 'destructive' : 'default'}
-            onClick={() => {
-              onConfirm();
+            onClick={async () => {
+              await onConfirm();
               onOpenChange(false);
             }}
           >

@@ -5,19 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, PowerOff } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
-import { useServices } from '@/lib/hooks/use-services';
+import { useDeleteService, useServices } from '@/lib/hooks/use-services';
 import { ColumnDef } from '@tanstack/react-table';
 import { Service } from '@/lib/api';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ServiceModal } from '@/components/modals';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useTranslation } from 'react-i18next';
 
 export default function ServicesPage() {
   const { t, i18n } = useTranslation();
   const [editService, setEditService] = useState<Service | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; service: Service | null }>({ open: false, service: null });
   const { data: services = [], isLoading, isError, refetch } = useServices();
+  const deleteService = useDeleteService();
   const numberLocale = i18n.language.startsWith('en') ? 'en-US' : 'ru-RU';
   const columns = useMemo<ColumnDef<Service>[]>(() => [
     { accessorKey: 'name', header: t('Name') },
@@ -57,7 +60,20 @@ export default function ServicesPage() {
   ], [numberLocale, t]);
 
   const handleEdit = (service: Service) => setEditService(service);
-  const handleDeactivate = (service: Service) => toast.warning(t('Deactivation'), { description: service.name });
+  const handleDeactivate = (service: Service) => setConfirmDialog({ open: true, service });
+
+  const confirmDeactivate = async () => {
+    if (!confirmDialog.service) return;
+    try {
+      await deleteService.mutateAsync(confirmDialog.service.id);
+      toast.success(t('ServiceDeactivated'), { description: confirmDialog.service.name });
+      refetch();
+    } catch (error: any) {
+      toast.error(t('ServiceDeactivateFailed'), {
+        description: error.response?.data?.detail || error.message,
+      });
+    }
+  };
 
   if (isLoading) return <div className="flex-1 space-y-4 p-8 pt-6"><h2 className="text-3xl font-bold">{t('Services')}</h2><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
   if (isError) return <div className="flex-1 space-y-4 p-8 pt-6"><h2 className="text-3xl font-bold">{t('Services')}</h2><p className="text-destructive">{t('ServicesLoadError')}</p></div>;
@@ -73,6 +89,15 @@ export default function ServicesPage() {
       </Card>
       <ServiceModal service={editService} open={!!editService} onOpenChange={(open) => !open && setEditService(null)} onSuccess={refetch} />
       <ServiceModal open={createModalOpen} onOpenChange={setCreateModalOpen} onSuccess={refetch} />
+      <ConfirmationDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={t('Deactivation')}
+        description={confirmDialog.service?.name || ''}
+        confirmText={t('Deactivate')}
+        variant="destructive"
+        onConfirm={confirmDeactivate}
+      />
     </div>
   );
 }

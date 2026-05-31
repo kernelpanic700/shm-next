@@ -46,8 +46,9 @@ export const useUpdateAbonent = () => {
       const response = await api.patch<Abonent>(`/abonents/${id}`, abonent);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['abonents'] });
+      queryClient.invalidateQueries({ queryKey: ['abonents', variables.id] });
     },
   });
 };
@@ -84,8 +85,9 @@ export const useDeleteAbonent = () => {
     mutationFn: async (id: string) => {
       await api.delete(`/abonents/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['abonents'] });
+      queryClient.invalidateQueries({ queryKey: ['abonents', id] });
     },
   });
 };

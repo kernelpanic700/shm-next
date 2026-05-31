@@ -5,20 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, PowerOff } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
-import { useTariffs } from '@/lib/hooks/use-tariffs';
+import { useDeleteTariff, useTariffs } from '@/lib/hooks/use-tariffs';
 import { ColumnDef } from '@tanstack/react-table';
 import { Tariff } from '@/lib/api';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TariffModal } from '@/components/modals';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useTranslation } from 'react-i18next';
 
 export default function TariffsPage() {
   const { t, i18n } = useTranslation();
   const [editTariff, setEditTariff] = useState<Tariff | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; tariff: Tariff | null }>({ open: false, tariff: null });
   
   const { data: tariffs = [], isLoading, isError, refetch } = useTariffs();
+  const deleteTariff = useDeleteTariff();
   const numberLocale = i18n.language.startsWith('en') ? 'en-US' : 'ru-RU';
   const columns = useMemo<ColumnDef<Tariff>[]>(() => [
     {
@@ -43,10 +46,10 @@ export default function TariffsPage() {
       },
     },
     {
-      accessorKey: 'billing_cycle',
+      accessorKey: 'billing_period',
       header: t('Period'),
       cell: ({ row }) => {
-        const cycle = row.getValue('billing_cycle') as string;
+        const cycle = row.getValue('billing_period') as string;
         const cycleMap: Record<string, string> = {
           monthly: t('Monthly'),
           quarterly: t('Quarterly'),
@@ -92,7 +95,20 @@ export default function TariffsPage() {
   };
 
   const handleDeactivate = (tariff: Tariff) => {
-    toast.warning(t('Deactivation'), { description: tariff.name });
+    setConfirmDialog({ open: true, tariff });
+  };
+
+  const confirmDeactivate = async () => {
+    if (!confirmDialog.tariff) return;
+    try {
+      await deleteTariff.mutateAsync(confirmDialog.tariff.id);
+      toast.success(t('TariffDeactivated'), { description: confirmDialog.tariff.name });
+      refetch();
+    } catch (error: any) {
+      toast.error(t('TariffDeactivateFailed'), {
+        description: error.response?.data?.detail || error.message,
+      });
+    }
   };
 
   if (isLoading) {
@@ -153,6 +169,15 @@ export default function TariffsPage() {
         open={createModalOpen}
         onOpenChange={setCreateModalOpen}
         onSuccess={refetch}
+      />
+      <ConfirmationDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
+        title={t('Deactivation')}
+        description={confirmDialog.tariff?.name || ''}
+        confirmText={t('Deactivate')}
+        variant="destructive"
+        onConfirm={confirmDeactivate}
       />
     </div>
   );

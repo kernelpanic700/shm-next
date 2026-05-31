@@ -31,7 +31,7 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
     name: '',
     description: '',
     price: '',
-    billing_cycle: 'monthly',
+    billing_period: 'monthly',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const billingCycles = [
@@ -46,14 +46,14 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
         name: tariff.name || '',
         description: tariff.description || '',
         price: tariff.price?.toString() || '',
-        billing_cycle: tariff.billing_cycle || 'monthly',
+        billing_period: tariff.billing_period || tariff.billing_cycle || 'monthly',
       });
     } else {
       setFormData({
         name: '',
         description: '',
         price: '',
-        billing_cycle: 'monthly',
+        billing_period: 'monthly',
       });
     }
   }, [tariff, open]);
@@ -129,8 +129,8 @@ export function TariffModal({ tariff, open, onOpenChange, onSuccess }: TariffMod
                 <Label htmlFor="billing_cycle">{t('Period')}</Label>
                 <select
                   id="billing_cycle"
-                  value={formData.billing_cycle}
-                  onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
+                  value={formData.billing_period}
+                  onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   {billingCycles.map((cycle) => (

@@ -105,7 +105,8 @@ export interface Tariff {
   description: string;
   price: number;
   currency: string;
-  billing_cycle: 'monthly' | 'quarterly' | 'yearly';
+  billing_period: 'monthly' | 'quarterly' | 'yearly';
+  billing_cycle?: 'monthly' | 'quarterly' | 'yearly';
   is_active: boolean;
   created_at: string;
 }
