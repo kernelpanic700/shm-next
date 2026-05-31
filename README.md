@@ -1,120 +1,141 @@
-# SHM Next — Современная биллинговая система
+# SHM Next
 
-**Современная система управления абонентами и биллингом** для интернет-провайдеров и телеком-компаний.
+SHM Next - биллинговая система для провайдера или небольшой телеком-команды. В проекте есть backend API, админка, личный кабинет абонента, воркер для фоновых задач и базовый контур автоматизации.
 
-![Python](https://img.shields.io/badge/Python-3.12-3776AB)
-![Next.js](https://img.shields.io/badge/Next.js-14-000000)
-![Litestar](https://img.shields.io/badge/Litestar-2.x-FF6B6B)
-![Docker](https://img.shields.io/badge/Docker-2496ED)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+Сейчас проект удобнее рассматривать как рабочую основу: абоненты, тарифы, услуги, платежи, события и spool уже связаны между собой, но перед промышленным запуском все равно стоит пройти свои сценарии, платежные интеграции и правила доступа.
 
-## ✨ Ключевые возможности
+## Что внутри
 
-- Чистая **DDD-архитектура** (Domain-Driven Design)
-- Высокопроизводительный **Async API** на Litestar
-- Надёжный **Worker** (Taskiq) + Spool-система с retry и backoff
-- Современный **Admin Panel** на Next.js 14 + TypeScript + Recharts
-- Уведомления (Email, SMS, Push, Webhooks)
-- PostgreSQL + Redis
+- Backend на Litestar с асинхронным доступом к PostgreSQL.
+- Admin Panel на Next.js для операторов и администраторов.
+- Client Panel на Next.js для личного кабинета абонента.
+- Taskiq worker для фоновых задач.
+- Redis для очередей и кэша.
+- Alembic-миграции.
+- Docker Compose для локального и production-профилей.
 
-## 🚀 Быстрый старт
+Основные рабочие разделы админки:
 
-### Docker (рекомендуется)
+- абоненты;
+- тарифы;
+- услуги;
+- платежи и финансы;
+- spool-задачи;
+- автоматизация событий;
+- настройки.
 
-```bash
-git clone https://github.com/kernelpanic700/shm-next.git
-cd shm-next
-docker compose --profile dev up -d
-```
+## Быстрый запуск
 
-Доступ:
-- **API**: http://localhost:8001
-- **OpenAPI schema/docs**: http://localhost:8001/schema
-- **PostgreSQL**: localhost:15432
-- **Redis**: localhost:16379
-
-Dev-профиль Docker поднимает backend, worker, PostgreSQL и Redis. Frontend в разработке запускается локально:
+Сначала подготовьте `.env`:
 
 ```bash
-# Admin Panel
-cd admin
-npm install
-npm run dev
-
-# Client Panel (в отдельном терминале)
-cd client
-npm install
-npm run dev -- --port 3001
+cp .env.example .env
 ```
 
-Локальный frontend:
-- **Admin Panel**: http://localhost:3000
-- **Client Panel**: http://localhost:3001
+Минимально проверьте в нем:
 
-Production-профиль Docker поднимает оба интерфейса:
+- `SECRET_KEY`;
+- `ADMIN_PHONE`;
+- `ADMIN_PASSWORD_HASH` или временно `ADMIN_PASSWORD`;
+- `API_PORT`, `CLIENT_PORT`, `ADMIN_PORT`;
+- параметры PostgreSQL и Redis, если запускаете не через стандартный compose.
+
+Production-профиль поднимает API, worker, PostgreSQL, Redis, админку и личный кабинет:
 
 ```bash
 docker compose --profile prod up -d --build
 ```
 
-Production-доступ по умолчанию:
-- **API**: http://localhost:8001
-- **Client Panel**: http://localhost:3001
-- **Admin Panel**: http://localhost:3002
+Адреса по умолчанию:
 
-Публичная регистрация в личном кабинете управляется переменной `ENABLE_CLIENT_REGISTRATION` в `.env`:
+- API: `http://localhost:8001`
+- OpenAPI/schema: `http://localhost:8001/schema`
+- Client Panel: `http://localhost:3001`
+- Admin Panel: `http://localhost:3002`
+- PostgreSQL: `localhost:15432`
+- Redis: `localhost:16379`
 
-```env
-ENABLE_CLIENT_REGISTRATION=false
-```
-
-После изменения этого флага пересоберите client-образ, так как Next.js подставляет `NEXT_PUBLIC_*` настройки на этапе сборки.
-
-### Локальный запуск
+Dev-профиль обычно используют для backend-части:
 
 ```bash
-# Backend
-pip install -e ".[dev]"
-cp .env.example .env
-uvicorn app.api.app:app --reload --port 8001
+docker compose --profile dev up -d
+```
 
-# Admin Panel (в новом терминале)
+Frontend в разработке удобнее запускать отдельно:
+
+```bash
 cd admin
 npm install
 npm run dev
 ```
 
-## 📸 Скриншоты
-
-*Скриншоты интерфейса будут добавлены в ближайшее время*
-
-## 🏗️ Архитектура
-
+```bash
+cd client
+npm install
+npm run dev -- --port 3001
 ```
+
+## Регистрация в личном кабинете
+
+Публичная регистрация абонентов в Client Panel выключена по умолчанию. Это сделано намеренно: в провайдерском биллинге абоненты чаще создаются оператором, миграцией или интеграцией.
+
+Флаг находится в `.env`:
+
+```env
+ENABLE_CLIENT_REGISTRATION=false
+```
+
+Чтобы включить регистрацию:
+
+```env
+ENABLE_CLIENT_REGISTRATION=true
+```
+
+После изменения флага нужно пересобрать client-образ, потому что Next.js подставляет публичные переменные на этапе сборки:
+
+```bash
+docker compose --profile prod build client
+docker compose --profile prod up -d client
+```
+
+## Структура проекта
+
+```text
 shm-next/
-├── app/                    # Backend (Litestar + DDD)
-├── admin/                  # Admin Panel (Next.js 14)
-├── client/                 # Личный кабинет абонента (Next.js 14)
-├── app/worker/             # Фоновые задачи (Taskiq)
-├── tests/                  # Тесты
-├── alembic/                # Миграции БД
+├── app/                    # Backend: API, domain, application, infrastructure
+├── app/worker/             # Taskiq worker и фоновые задачи
+├── admin/                  # Админка
+├── client/                 # Личный кабинет абонента
+├── alembic/                # Миграции базы
+├── docs/                   # Документация по рабочим сценариям
+├── scripts/                # Вспомогательные скрипты
+├── tests/                  # Unit и integration tests
 └── docker-compose.yml
 ```
 
-## 📚 Документация
+## Документация
 
-- [Руководство по работе с биллингом](docs/BILLING_GUIDE.md)
+- [Работа с биллингом](docs/BILLING_GUIDE.md)
 
-## 📄 Лицензия
+## Проверки перед коммитом
 
-Проект распространяется под лицензией MIT — см. файл [LICENSE](LICENSE).
+Обычно достаточно такого набора:
 
-## 🤝 Contributing
+```bash
+.venv/bin/pytest tests/unit/api/test_abonent_controller.py -q
+npm --prefix admin run lint
+npm --prefix admin run build
+npm --prefix client run lint
+npm --prefix client run build
+```
 
-Pull Request'ы приветствуются! Пожалуйста, ознакомьтесь с [CONTRIBUTING.md](CONTRIBUTING.md) для деталей.
+Для проверки поднятого стенда:
 
-## 🗺️ Roadmap
+```bash
+curl -fsS http://localhost:8001/health
+docker compose ps
+```
 
-- **v0.2.0** — Улучшения Admin Panel + Rate Limiting
-- **v0.3.0** — Security hardening + Performance
-- **v1.0.0** — Multi-tenancy, расширенная аналитика, GraphQL
+## Лицензия
+
+Проект распространяется под лицензией MIT. Подробности в файле [LICENSE](LICENSE).
