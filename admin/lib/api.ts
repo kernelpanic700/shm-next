@@ -79,6 +79,7 @@ export interface Abonent {
   can_overdraft?: boolean;
   verified?: boolean;
   settings?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -89,6 +90,13 @@ export interface AbonentListResponse {
   page: number;
   per_page: number;
   pages: number;
+}
+
+export interface AbonentProfile {
+  abonent_id: string;
+  data: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Tariff {

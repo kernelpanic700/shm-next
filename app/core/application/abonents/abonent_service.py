@@ -206,6 +206,15 @@ class AbonentService:
             abonent._phone = data.phone
             changes["phone"] = data.phone
 
+        if data.account_number is not None:
+            existing = await self._abonent_repo.get_by_account(data.account_number)
+            if existing and existing.id != abonent_id:
+                raise ValueError(
+                    f"Account {data.account_number} already belongs to another abonent"
+                )
+            abonent._account_number = data.account_number
+            changes["account_number"] = data.account_number
+
         for attr in (
             "email",
             "login",

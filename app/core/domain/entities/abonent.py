@@ -69,6 +69,7 @@ class AbonentUpdate:
         self,
         full_name: str | None = None,
         phone: str | None = None,
+        account_number: str | None = None,
         status: str | None = None,
         tariff_id: UUID | None = None,
         allow_negative: bool | None = None,
@@ -87,6 +88,7 @@ class AbonentUpdate:
     ) -> None:
         self.full_name = full_name
         self.phone = phone
+        self.account_number = account_number
         self.status = status
         self.tariff_id = tariff_id
         self.allow_negative = allow_negative

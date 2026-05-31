@@ -36,6 +36,7 @@ const translations = {
   "Value": "Wert",
   "Disabled": "Deaktiviert",
   "Abonent": "Abonnent",
+  "Comment": "Kommentar",
 
   // Navigation
   "Dashboard": "Dashboard",
@@ -138,6 +139,9 @@ const translations = {
   "SelectTariffPlaceholder": "Tarif auswählen...",
   "TariffChange": "Tarifänderung",
   "AbonentDeactivated": "Abonnent deaktiviert",
+  "AbonentUpdated": "Abonnent aktualisiert",
+  "AbonentSaveFailed": "Abonnent konnte nicht gespeichert werden",
+  "InvalidJson": "Ungültiges JSON",
   "AbonentsLoadError": "Abonnenten konnten nicht geladen werden",
   "AddAbonent": "Abonnent hinzufügen",
   "Filters": "Filter",
@@ -149,6 +153,8 @@ const translations = {
   "SearchAbonents": "Nach Name, Telefon oder Kontonummer suchen...",
   "DeactivateAbonentTitle": "Abonnent deaktivieren",
   "DeactivateAbonentDescription": "Möchten Sie den Abonnenten \"{{name}}\" wirklich deaktivieren? Diese Aktion kann nicht rückgängig gemacht werden.",
+  "AbonentSettings": "Abonnenteneinstellungen",
+  "AbonentSettingsDescription": "Konto-, Finanz- und erweiterte SHM-Felder bearbeiten",
   "AbonentDeactivateFailed": "Abonnent konnte nicht deaktiviert werden",
   "BasicInfo": "Basisdaten",
   "ChangeHistory": "Änderungsverlauf",

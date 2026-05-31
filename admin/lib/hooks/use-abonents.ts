@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, Abonent, AbonentListResponse } from '@/lib/api';
+import { api, Abonent, AbonentListResponse, AbonentProfile } from '@/lib/api';
 
 export const useAbonents = () => {
   return useQuery({
@@ -48,6 +48,31 @@ export const useUpdateAbonent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['abonents'] });
+    },
+  });
+};
+
+export const useAbonentProfile = (id: string) => {
+  return useQuery({
+    queryKey: ['abonents', id, 'profile'],
+    queryFn: async () => {
+      const response = await api.get<AbonentProfile>(`/abonents/${id}/profile`);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+};
+
+export const useUpdateAbonentProfile = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) => {
+      const response = await api.post<AbonentProfile>(`/abonents/${id}/profile`, { data });
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['abonents', variables.id, 'profile'] });
     },
   });
 };

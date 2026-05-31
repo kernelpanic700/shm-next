@@ -83,6 +83,7 @@ class AbonentUpdateRequest(BaseModel):
     """Запрос на обновление абонента."""
     full_name: constr(min_length=2, max_length=255) | None = None
     phone: constr(min_length=10, max_length=20) | None = None
+    account_number: constr(min_length=1, max_length=20) | None = None
     login: str | None = Field(default=None, min_length=1, max_length=128)
     login2: str | None = Field(default=None, min_length=1, max_length=128)
     email: EmailStr | None = None

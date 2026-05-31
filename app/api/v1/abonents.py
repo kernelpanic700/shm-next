@@ -209,6 +209,7 @@ class AbonentController(Controller):
                     AbonentUpdate(
                         full_name=data.full_name,
                         phone=data.phone,
+                        account_number=data.account_number,
                         status=data.status,
                         tariff_id=data.tariff_id,
                         allow_negative=data.allow_negative,

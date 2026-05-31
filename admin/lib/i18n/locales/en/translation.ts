@@ -36,6 +36,7 @@ const translations = {
   "Value": "Value",
   "Disabled": "Disabled",
   "Abonent": "Abonent",
+  "Comment": "Comment",
 
   // Navigation
   "Dashboard": "Dashboard",
@@ -138,6 +139,9 @@ const translations = {
   "SelectTariffPlaceholder": "Select a tariff...",
   "TariffChange": "Tariff change",
   "AbonentDeactivated": "Abonent deactivated",
+  "AbonentUpdated": "Abonent updated",
+  "AbonentSaveFailed": "Failed to save abonent",
+  "InvalidJson": "Invalid JSON",
   "AbonentsLoadError": "Failed to load abonents",
   "AddAbonent": "Add abonent",
   "Filters": "Filters",
@@ -149,6 +153,8 @@ const translations = {
   "SearchAbonents": "Search by full name, phone, or account number...",
   "DeactivateAbonentTitle": "Deactivate abonent",
   "DeactivateAbonentDescription": "Are you sure you want to deactivate abonent \"{{name}}\"? This action cannot be undone.",
+  "AbonentSettings": "Abonent settings",
+  "AbonentSettingsDescription": "Edit account, finance, and extended SHM abonent fields",
   "AbonentDeactivateFailed": "Failed to deactivate abonent",
   "BasicInfo": "Basic info",
   "ChangeHistory": "Change history",

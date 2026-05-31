@@ -36,6 +36,7 @@ const translations = {
   "Value": "Значение",
   "Disabled": "Отключен",
   "Abonent": "Абонент",
+  "Comment": "Комментарий",
 
   // Navigation
   "Dashboard": "Панель управления",
@@ -138,6 +139,9 @@ const translations = {
   "SelectTariffPlaceholder": "Выберите тариф...",
   "TariffChange": "Изменение тарифа",
   "AbonentDeactivated": "Абонент деактивирован",
+  "AbonentUpdated": "Абонент обновлён",
+  "AbonentSaveFailed": "Не удалось сохранить абонента",
+  "InvalidJson": "Некорректный JSON",
   "AbonentsLoadError": "Ошибка загрузки абонентов",
   "AddAbonent": "Добавить абонента",
   "Filters": "Фильтры",
@@ -149,6 +153,8 @@ const translations = {
   "SearchAbonents": "Поиск по ФИО, телефону или лицевому счёту...",
   "DeactivateAbonentTitle": "Деактивация абонента",
   "DeactivateAbonentDescription": "Вы уверены, что хотите деактивировать абонента \"{{name}}\"? Это действие нельзя отменить.",
+  "AbonentSettings": "Настройки абонента",
+  "AbonentSettingsDescription": "Редактирование учётных, финансовых и расширенных SHM-полей абонента",
   "AbonentDeactivateFailed": "Не удалось деактивировать абонента",
   "BasicInfo": "Основная информация",
   "ChangeHistory": "История изменений",
