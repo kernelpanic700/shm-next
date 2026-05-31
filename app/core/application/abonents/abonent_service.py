@@ -233,6 +233,7 @@ class AbonentService:
                 setattr(abonent, f"_{attr}", value)
                 changes[attr] = str(value) if attr == "partner_id" else value
 
+        previous_status = abonent.status
         if data.status is not None:
             new_status = AbonentStatus(data.status)
             abonent._status = new_status
@@ -254,13 +255,31 @@ class AbonentService:
         saved = await self._abonent_repo.save(abonent)
 
         # Публикуем событие
-        from app.core.domain.events.abonent_events import AbonentUpdatedEvent
+        from app.core.domain.events.abonent_events import (
+            AbonentActivatedEvent,
+            AbonentBlockedEvent,
+            AbonentDeactivatedEvent,
+            AbonentUpdatedEvent,
+        )
 
         event = AbonentUpdatedEvent(
             abonent_id=str(saved.id),
             changes=changes,
         )
         await self._event_bus.publish(event)
+        if "status" in changes and saved.status != previous_status:
+            if saved.status == AbonentStatus.BLOCKED:
+                await self._event_bus.publish(
+                    AbonentBlockedEvent(abonent_id=str(saved.id), reason="Status changed")
+                )
+            elif saved.status == AbonentStatus.ACTIVE:
+                await self._event_bus.publish(
+                    AbonentActivatedEvent(abonent_id=str(saved.id))
+                )
+            elif saved.status == AbonentStatus.INACTIVE:
+                await self._event_bus.publish(
+                    AbonentDeactivatedEvent(abonent_id=str(saved.id), reason="Status changed")
+                )
 
         logger.info(
             "Abonent updated",
@@ -279,6 +298,23 @@ class AbonentService:
 
         return result
 
+    async def delete_inactive_abonent(self, abonent_id: UUID) -> bool:
+        """Физически удалить неактивного абонента без расчетной истории."""
+        result = await self._abonent_repo.delete_inactive(abonent_id)
+
+        if result:
+            from app.core.domain.events.abonent_events import AbonentDeletedEvent
+
+            await self._event_bus.publish(
+                AbonentDeletedEvent(
+                    abonent_id=str(abonent_id),
+                    reason="Inactive abonent deleted",
+                )
+            )
+            logger.info("Inactive abonent deleted", abonent_id=abonent_id)
+
+        return result
+
     async def deactivate_abonent(self, abonent_id: UUID) -> Abonent | None:
         """Мягко деактивировать абонента."""
         abonent = await self._abonent_repo.get(abonent_id)
@@ -288,13 +324,22 @@ class AbonentService:
         abonent._status = AbonentStatus.INACTIVE
         saved = await self._abonent_repo.save(abonent)
 
-        from app.core.domain.events.abonent_events import AbonentUpdatedEvent
+        from app.core.domain.events.abonent_events import (
+            AbonentDeactivatedEvent,
+            AbonentUpdatedEvent,
+        )
 
         event = AbonentUpdatedEvent(
             abonent_id=str(saved.id),
             changes={"status": AbonentStatus.INACTIVE.value},
         )
         await self._event_bus.publish(event)
+        await self._event_bus.publish(
+            AbonentDeactivatedEvent(
+                abonent_id=str(saved.id),
+                reason="Manual deactivation",
+            )
+        )
 
         logger.info("Abonent deactivated", abonent_id=saved.id)
         return saved

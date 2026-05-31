@@ -15,9 +15,15 @@ from app.core.domain.value_objects.event_type import EventType
 
 
 class ServiceEventSpoolHandler:
-    """Создает spool-задачи для SHM-событий услуг."""
+    """Создает spool-задачи для SHM-событий услуг и абонентов."""
 
     SUPPORTED_EVENTS = {
+        EventType.ABONENT_CREATED.value,
+        EventType.ABONENT_UPDATED.value,
+        EventType.ABONENT_DELETED.value,
+        EventType.ABONENT_BLOCKED.value,
+        EventType.ABONENT_ACTIVATED.value,
+        EventType.ABONENT_DEACTIVATED.value,
         EventType.SERVICE_ACTIVATED.value,
         EventType.SERVICE_DEACTIVATED.value,
         EventType.SERVICE_RENEWED.value,
@@ -99,6 +105,8 @@ class ServiceEventSpoolHandler:
             "catalog_service_id": getattr(event, "catalog_service_id", None),
             "expires_at": expires_at.isoformat() if expires_at else None,
             "reason": getattr(event, "reason", None),
+            "changes": getattr(event, "changes", None),
+            "status": getattr(event, "status", None),
         }
         payload.update(getattr(event, "payload", {}) or {})
         return payload

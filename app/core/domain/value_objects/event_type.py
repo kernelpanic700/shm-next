@@ -26,6 +26,7 @@ class EventType(Enum):
     ABONENT_DELETED = ("abonent.deleted", EventCategory.ACCOUNT, True)
     ABONENT_BLOCKED = ("abonent.blocked", EventCategory.ACCOUNT, True)
     ABONENT_ACTIVATED = ("abonent.activated", EventCategory.ACCOUNT, False)
+    ABONENT_DEACTIVATED = ("abonent.deactivated", EventCategory.ACCOUNT, False)
 
     # === Биллинг ===
     BILLING_WITHDRAW_CREATED = ("billing.withdraw_created", EventCategory.BILLING, False)

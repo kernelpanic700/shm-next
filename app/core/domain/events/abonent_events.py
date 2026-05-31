@@ -61,6 +61,7 @@ class AbonentBlockedEvent(DomainEvent):
         super().__init__(EventType.ABONENT_BLOCKED, metadata)
         self.abonent_id = abonent_id
         self.reason = reason
+        self.status = "BLOCKED"
 
 
 class AbonentActivatedEvent(DomainEvent):
@@ -73,3 +74,33 @@ class AbonentActivatedEvent(DomainEvent):
     ) -> None:
         super().__init__(EventType.ABONENT_ACTIVATED, metadata)
         self.abonent_id = abonent_id
+        self.status = "ACTIVE"
+
+
+class AbonentDeactivatedEvent(DomainEvent):
+    """Абонент деактивирован."""
+
+    def __init__(
+        self,
+        abonent_id: str,
+        reason: str = "",
+        metadata: EventMetadata | None = None,
+    ) -> None:
+        super().__init__(EventType.ABONENT_DEACTIVATED, metadata)
+        self.abonent_id = abonent_id
+        self.reason = reason
+        self.status = "INACTIVE"
+
+
+class AbonentDeletedEvent(DomainEvent):
+    """Неактивный абонент физически удалён."""
+
+    def __init__(
+        self,
+        abonent_id: str,
+        reason: str = "",
+        metadata: EventMetadata | None = None,
+    ) -> None:
+        super().__init__(EventType.ABONENT_DELETED, metadata)
+        self.abonent_id = abonent_id
+        self.reason = reason

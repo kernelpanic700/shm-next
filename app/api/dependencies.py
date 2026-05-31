@@ -25,6 +25,21 @@ from app.infrastructure.cache.redis_cache import RedisCache
 from app.infrastructure.db.unit_of_work import UnitOfWork
 
 
+def build_event_bus_with_spool(uow: UnitOfWork):
+    """EventBus с SHM-style правилами выполнения через spool."""
+    from app.core.application.events import ServiceEventSpoolHandler
+    from app.core.services.event_bus import EventBus
+
+    event_bus = EventBus()
+    spool_handler = ServiceEventSpoolHandler(
+        rule_repo=uow.event_action_rules,
+        spool_repo=uow.spool,
+    )
+    for event_type in ServiceEventSpoolHandler.SUPPORTED_EVENTS:
+        event_bus.subscribe(event_type, spool_handler)
+    return event_bus
+
+
 async def provide_db_session(state: State) -> AsyncGenerator[AsyncSession, None]:
     """
     Provide an async database session.
@@ -89,8 +104,7 @@ def get_abonent_service(uow: UnitOfWork) -> AbonentService:
     Returns:
         AbonentService: Abonent service instance.
     """
-    from app.core.services.event_bus import EventBus
-    return AbonentService(uow.abonents, EventBus())
+    return AbonentService(uow.abonents, build_event_bus_with_spool(uow))
 
 
 def get_tariff_service(uow: UnitOfWork) -> TariffService:
@@ -118,21 +132,11 @@ def get_service_service(uow: UnitOfWork) -> ServiceService:
     Returns:
         ServiceService: Service service instance.
     """
-    from app.core.application.events import ServiceEventSpoolHandler
     from app.core.application.services.service_service import ServiceService
-    from app.core.services.event_bus import EventBus
-
-    event_bus = EventBus()
-    spool_handler = ServiceEventSpoolHandler(
-        rule_repo=uow.event_action_rules,
-        spool_repo=uow.spool,
-    )
-    for event_type in ServiceEventSpoolHandler.SUPPORTED_EVENTS:
-        event_bus.subscribe(event_type, spool_handler)
 
     return ServiceService(
         uow.services,
-        event_bus,
+        build_event_bus_with_spool(uow),
         catalog_service_repo=uow.catalog_services,
     )
 

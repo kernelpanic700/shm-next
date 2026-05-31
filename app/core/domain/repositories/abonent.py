@@ -64,6 +64,11 @@ class AbonentRepositoryProtocol(ABC):
         ...
 
     @abstractmethod
+    async def delete_inactive(self, abonent_id: UUID) -> bool:
+        """Физически удалить неактивного абонента без финансовой истории."""
+        ...
+
+    @abstractmethod
     async def exists(self, abonent_id: UUID) -> bool:
         """Проверка существования абонента."""
         ...

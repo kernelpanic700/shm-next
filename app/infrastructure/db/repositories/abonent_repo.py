@@ -5,12 +5,23 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.domain.entities.abonent import Abonent
 from app.core.domain.repositories.abonent import AbonentRepositoryProtocol
-from app.infrastructure.db.models.abonent import AbonentModel
+from app.infrastructure.db.models.abonent import (
+    AbonentModel,
+    AbonentProfileModel,
+    AbonentStorageModel,
+)
+from app.infrastructure.db.models.invoice import InvoiceModel
+from app.infrastructure.db.models.notification import NotificationModel
+from app.infrastructure.db.models.payment import PaymentModel
+from app.infrastructure.db.models.service import ServiceModel
+from app.infrastructure.db.models.session import SessionModel
+from app.infrastructure.db.models.withdraw import WithdrawModel
 from app.infrastructure.db.repositories.base import BaseRepository
 
 
@@ -130,9 +141,67 @@ class AbonentRepository(AbonentRepositoryProtocol, BaseRepository):
         """Удалить абонента."""
         return await BaseRepository.delete(self, abonent_id)
 
+    async def delete_inactive(self, abonent_id: UUID) -> bool:
+        """Физически удалить неактивного абонента без расчетной истории."""
+        model = await self._session.get(AbonentModel, abonent_id)
+        if model is None:
+            return False
+        if model.status != "INACTIVE":
+            raise ValueError("Only inactive abonents can be deleted")
+
+        blockers = {
+            "services": await self._count(ServiceModel, ServiceModel.abonent_id == abonent_id),
+            "payments": await self._count(PaymentModel, PaymentModel.abonent_id == abonent_id),
+            "withdraws": await self._count(WithdrawModel, WithdrawModel.abonent_id == str(abonent_id)),
+            "invoices": await self._count(InvoiceModel, InvoiceModel.abonent_id == abonent_id),
+            "notifications": await self._count(NotificationModel, NotificationModel.abonent_id == abonent_id),
+            "partners": await self._count(AbonentModel, AbonentModel.partner_id == abonent_id),
+        }
+        blockers = {name: count for name, count in blockers.items() if count}
+        if blockers:
+            details = ", ".join(f"{name}={count}" for name, count in blockers.items())
+            raise ValueError(f"Cannot delete inactive abonent with related records: {details}")
+
+        await self._delete_if_table_exists(
+            SessionModel,
+            SessionModel.abonent_id == abonent_id,
+        )
+        await self._delete_if_table_exists(
+            AbonentStorageModel,
+            AbonentStorageModel.abonent_id == abonent_id,
+        )
+        await self._delete_if_table_exists(
+            AbonentProfileModel,
+            AbonentProfileModel.abonent_id == abonent_id,
+        )
+        await self._session.execute(
+            sa_delete(AbonentModel).where(AbonentModel.id == abonent_id)
+        )
+        await self._session.flush()
+        return True
+
     async def exists(self, abonent_id: UUID) -> bool:
         """Проверка существования абонента."""
         return await BaseRepository.exists(self, abonent_id)
+
+    async def _count(self, model: type, condition) -> int:
+        if not await self._table_exists(model):
+            return 0
+        stmt = select(func.count()).select_from(model).where(condition)
+        result = await self._session.execute(stmt)
+        return int(result.scalar() or 0)
+
+    async def _delete_if_table_exists(self, model: type, condition) -> None:
+        if not await self._table_exists(model):
+            return
+        await self._session.execute(sa_delete(model).where(condition))
+
+    async def _table_exists(self, model: type) -> bool:
+        table_name = getattr(model, "__tablename__", "")
+        if not table_name:
+            return False
+        result = await self._session.execute(select(func.to_regclass(table_name)))
+        return result.scalar() is not None
 
     def _to_domain(self, model: AbonentModel) -> Abonent:
         """Конвертация модели в доменную сущность."""

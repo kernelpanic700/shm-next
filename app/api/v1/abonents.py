@@ -349,6 +349,34 @@ class AbonentController(Controller):
             await uow.commit()
             return None
 
+    @delete(
+        path="/{abonent_id:uuid}/hard",
+        summary="Физически удалить неактивного абонента",
+        status_code=HTTP_204_NO_CONTENT,
+    )
+    async def hard_delete_inactive_abonent(
+        self,
+        abonent_id: UUID,
+        uow: UnitOfWork,
+        abonent_service: AbonentService,
+    ) -> None:
+        """Удалить только INACTIVE-абонента без расчетной истории."""
+        async with uow:
+            try:
+                deleted = await abonent_service.delete_inactive_abonent(abonent_id)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=HTTP_409_CONFLICT,
+                    detail=str(exc),
+                ) from exc
+            if not deleted:
+                raise HTTPException(
+                    status_code=HTTP_404_NOT_FOUND,
+                    detail=f"Abonent with id {abonent_id} not found",
+                )
+            await uow.commit()
+            return None
+
     @post(
         path="/{abonent_id:uuid}/balance/top-up",
         summary="Пополнить баланс абонента",

@@ -6,9 +6,9 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, DollarSign, PowerOff, RefreshCw, Pencil } from 'lucide-react';
+import { Plus, DollarSign, PowerOff, RefreshCw, Pencil, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
-import { useAbonents, useDeleteAbonent } from '@/lib/hooks/use-abonents';
+import { useAbonents, useDeleteAbonent, useHardDeleteInactiveAbonent } from '@/lib/hooks/use-abonents';
 import { ColumnDef } from '@tanstack/react-table';
 import { Abonent } from '@/lib/api';
 import { toast } from 'sonner';
@@ -26,9 +26,11 @@ export default function AbonentsPage() {
   const [changeTariffAbonent, setChangeTariffAbonent] = useState<Abonent | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; abonent: Abonent | null }>({ open: false, abonent: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; abonent: Abonent | null }>({ open: false, abonent: null });
   
   const { data: abonents = [], isLoading, isError, refetch } = useAbonents();
   const deleteAbonent = useDeleteAbonent();
+  const hardDeleteInactiveAbonent = useHardDeleteInactiveAbonent();
   const numberLocale = i18n.language.startsWith('en') ? 'en-US' : i18n.language.startsWith('de') ? 'de-DE' : 'ru-RU';
 
   const filteredAbonents = useMemo(() => {
@@ -126,6 +128,16 @@ export default function AbonentsPage() {
             >
               <PowerOff className="h-4 w-4" />
             </Button>
+            {abonent.status === 'INACTIVE' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => (table.options.meta as any)?.onHardDelete(abonent)}
+                title={t('DeleteInactiveAbonent')}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         );
       },
@@ -145,6 +157,10 @@ export default function AbonentsPage() {
     setConfirmDialog({ open: true, abonent });
   };
 
+  const handleHardDelete = (abonent: Abonent) => {
+    setDeleteDialog({ open: true, abonent });
+  };
+
   const confirmDeactivate = async () => {
     if (confirmDialog.abonent) {
       try {
@@ -152,6 +168,20 @@ export default function AbonentsPage() {
         toast.success(t('AbonentDeactivated'), { description: `${confirmDialog.abonent.full_name || confirmDialog.abonent.phone}` });
       } catch (error: any) {
         toast.error(t('AbonentDeactivateFailed'), {
+          description: error.response?.data?.detail || error.message,
+        });
+      }
+      refetch();
+    }
+  };
+
+  const confirmHardDelete = async () => {
+    if (deleteDialog.abonent) {
+      try {
+        await hardDeleteInactiveAbonent.mutateAsync(deleteDialog.abonent.id);
+        toast.success(t('AbonentDeleted'), { description: `${deleteDialog.abonent.full_name || deleteDialog.abonent.phone}` });
+      } catch (error: any) {
+        toast.error(t('AbonentDeleteFailed'), {
           description: error.response?.data?.detail || error.message,
         });
       }
@@ -247,7 +277,7 @@ export default function AbonentsPage() {
             data={filteredAbonents} 
             searchKey="name"
             searchPlaceholder={t('SearchAbonents')}
-            meta={{ onTopUp: handleTopUp, onChangeTariff: handleChangeTariff, onDeactivate: handleDeactivate }}
+            meta={{ onTopUp: handleTopUp, onChangeTariff: handleChangeTariff, onDeactivate: handleDeactivate, onHardDelete: handleHardDelete }}
           />
         </CardContent>
       </Card>
@@ -277,6 +307,15 @@ export default function AbonentsPage() {
         confirmText={t('Deactivate')}
         variant="destructive"
         onConfirm={confirmDeactivate}
+      />
+      <ConfirmationDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
+        title={t('DeleteInactiveAbonentTitle')}
+        description={t('DeleteInactiveAbonentDescription', { name: deleteDialog.abonent?.full_name || deleteDialog.abonent?.phone })}
+        confirmText={t('Delete')}
+        variant="destructive"
+        onConfirm={confirmHardDelete}
       />
     </div>
   );

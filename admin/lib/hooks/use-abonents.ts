@@ -91,3 +91,17 @@ export const useDeleteAbonent = () => {
     },
   });
 };
+
+export const useHardDeleteInactiveAbonent = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/abonents/${id}/hard`);
+    },
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ['abonents'] });
+      queryClient.invalidateQueries({ queryKey: ['abonents', id] });
+    },
+  });
+};

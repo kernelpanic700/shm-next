@@ -24,6 +24,9 @@ def _render_template(body: str, context: dict[str, Any]) -> str:
         "service_type": context.get("service_type") or "",
         "catalog_service_id": context.get("catalog_service_id") or "",
         "reason": context.get("reason") or "",
+        "status": context.get("status") or "",
+        "changes": context.get("changes") or "",
+        "event_type": (context.get("event") or {}).get("type") if isinstance(context.get("event"), dict) else "",
     }
     rendered = Template(body).safe_substitute(flattened)
     return rendered.format_map(_SafeDict(flattened))

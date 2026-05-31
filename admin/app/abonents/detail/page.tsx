@@ -5,12 +5,12 @@ import { Suspense } from 'react';
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAbonent, useAbonentProfile, useDeleteAbonent, useUpdateAbonent, useUpdateAbonentProfile } from '@/lib/hooks/use-abonents';
+import { useAbonent, useAbonentProfile, useDeleteAbonent, useHardDeleteInactiveAbonent, useUpdateAbonent, useUpdateAbonentProfile } from '@/lib/hooks/use-abonents';
 import { usePayments } from '@/lib/hooks/use-payments';
 import { useAbonentServices } from '@/lib/hooks/use-abonent-services';
 import { TopUpBalanceModal, ChangeTariffModal } from '@/components/modals';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { ArrowLeft, DollarSign, RefreshCw, PowerOff, Save, Pencil } from 'lucide-react';
+import { ArrowLeft, DollarSign, RefreshCw, PowerOff, Save, Pencil, Trash2 } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import { Abonent, Payment, Service } from '@/lib/api';
@@ -61,6 +61,7 @@ export default function AbonentDetailPage() {
   const [changeTariffModalOpen, setChangeTariffModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   const [deactivateDialog, setDeactivateDialog] = useState<{ open: boolean; abonent: any | null }>({ open: false, abonent: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; abonent: any | null }>({ open: false, abonent: null });
   const [formData, setFormData] = useState<AbonentFormData>({
     full_name: '',
     phone: '',
@@ -91,6 +92,7 @@ export default function AbonentDetailPage() {
   const updateAbonent = useUpdateAbonent();
   const updateProfile = useUpdateAbonentProfile();
   const deleteAbonent = useDeleteAbonent();
+  const hardDeleteInactiveAbonent = useHardDeleteInactiveAbonent();
   const { data: payments = [], isLoading: paymentsLoading } = usePayments(abonentId);
   const { data: abonentServices = [], isLoading: servicesLoading } = useAbonentServices(abonentId);
   const dateLocale = getDateLocale(i18n.language);
@@ -200,6 +202,19 @@ export default function AbonentDetailPage() {
     }
   };
 
+  const confirmHardDelete = async () => {
+    if (!deleteDialog.abonent) return;
+    try {
+      await hardDeleteInactiveAbonent.mutateAsync(deleteDialog.abonent.id);
+      toast.success(t('AbonentDeleted'));
+      window.location.href = '/abonents';
+    } catch (error: any) {
+      toast.error(t('AbonentDeleteFailed'), {
+        description: error.response?.data?.detail || error.message,
+      });
+    }
+  };
+
   const handleSave = async () => {
     try {
       const settings = JSON.parse(formData.settings || '{}');
@@ -254,6 +269,11 @@ export default function AbonentDetailPage() {
           <Button variant="destructive" onClick={handleDeactivate}>
             <PowerOff className="mr-2 h-4 w-4" /> {t('Deactivate')}
           </Button>
+          {abonent.status === 'INACTIVE' && (
+            <Button variant="destructive" onClick={() => setDeleteDialog({ open: true, abonent })}>
+              <Trash2 className="mr-2 h-4 w-4" /> {t('Delete')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -386,6 +406,15 @@ export default function AbonentDetailPage() {
         confirmText={t('Deactivate')}
         variant="destructive"
         onConfirm={confirmDeactivate}
+      />
+      <ConfirmationDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
+        title={t('DeleteInactiveAbonentTitle')}
+        description={t('DeleteInactiveAbonentDescription', { name: deleteDialog.abonent?.name || deleteDialog.abonent?.phone })}
+        confirmText={t('Delete')}
+        variant="destructive"
+        onConfirm={confirmHardDelete}
       />
     </div>
   );

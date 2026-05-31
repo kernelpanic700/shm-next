@@ -25,7 +25,17 @@ import {
   useSSHKeys,
 } from '@/lib/hooks/use-automation';
 
-const events = ['service.activated', 'service.deactivated', 'service.renewed'];
+const events = [
+  'service.activated',
+  'service.deactivated',
+  'service.renewed',
+  'abonent.created',
+  'abonent.updated',
+  'abonent.blocked',
+  'abonent.activated',
+  'abonent.deactivated',
+  'abonent.deleted',
+];
 
 function preventEmpty(value: string | undefined) {
   const trimmed = value?.trim();
@@ -60,6 +70,8 @@ export default function AutomationPage() {
     server_id: '',
     template_id: '',
     command: '',
+    priority: 50,
+    max_retries: 3,
   });
 
   const isLoading = keys.isLoading || groups.isLoading || servers.isLoading || templates.isLoading || rules.isLoading;
@@ -107,6 +119,8 @@ export default function AutomationPage() {
       server_id: preventEmpty(ruleForm.server_id) || null,
       template_id: preventEmpty(ruleForm.template_id) || null,
       command: preventEmpty(ruleForm.command),
+      priority: Number(ruleForm.priority || 50),
+      max_retries: Number(ruleForm.max_retries || 3),
     });
     setRuleForm({ ...ruleForm, title: '', service_type: '', command: '' });
     toast.success(t('Created'));
@@ -202,7 +216,7 @@ export default function AutomationPage() {
             <form onSubmit={submitTemplate} className="grid gap-3">
               <Label>{t('Name')}<Input value={templateForm.name} onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })} required /></Label>
               <Label>{t('Description')}<Input value={templateForm.description} onChange={(e) => setTemplateForm({ ...templateForm, description: e.target.value })} /></Label>
-              <Label>{t('Command')}<Textarea value={templateForm.body} onChange={(e) => setTemplateForm({ ...templateForm, body: e.target.value })} placeholder="sh /opt/scripts/activate.sh {abonent_id} {service_id}" required rows={5} /></Label>
+              <Label>{t('Command')}<Textarea value={templateForm.body} onChange={(e) => setTemplateForm({ ...templateForm, body: e.target.value })} placeholder="sh /opt/scripts/activate.sh {abonent_id} {service_id} {event_type}" required rows={5} /></Label>
               <Button disabled={createTemplate.isPending}><Plus className="mr-2 h-4 w-4" />{t('Create')}</Button>
             </form>
             <div className="space-y-2">
@@ -227,10 +241,13 @@ export default function AutomationPage() {
             <Label>{t('Title')}<Input value={ruleForm.title} onChange={(e) => setRuleForm({ ...ruleForm, title: e.target.value })} /></Label>
             <Label>{t('Event')}<Select value={ruleForm.event_type} onChange={(e) => setRuleForm({ ...ruleForm, event_type: e.target.value })}>{events.map((event) => <option key={event} value={event}>{event}</option>)}</Select></Label>
             <Label>{t('ServiceType')}<Input value={ruleForm.service_type} onChange={(e) => setRuleForm({ ...ruleForm, service_type: e.target.value })} placeholder="internet" /></Label>
+            <Label>{t('Priority')}<Input type="number" min={0} max={1000} value={ruleForm.priority} onChange={(e) => setRuleForm({ ...ruleForm, priority: Number(e.target.value) })} /></Label>
+            <Label>{t('MaxRetries')}<Input type="number" min={0} max={20} value={ruleForm.max_retries} onChange={(e) => setRuleForm({ ...ruleForm, max_retries: Number(e.target.value) })} /></Label>
             <Label>{t('ServerGroup')}<Select value={ruleForm.server_group_id} onChange={(e) => setRuleForm({ ...ruleForm, server_group_id: e.target.value })}><option value="">{t('Select')}</option>{(groups.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Label>
             <Label>{t('Server')}<Select value={ruleForm.server_id} onChange={(e) => setRuleForm({ ...ruleForm, server_id: e.target.value })}><option value="">{t('AutoSelect')}</option>{(servers.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Label>
             <Label>{t('Template')}<Select value={ruleForm.template_id} onChange={(e) => setRuleForm({ ...ruleForm, template_id: e.target.value })}><option value="">{t('InlineCommand')}</option>{(templates.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select></Label>
             <Label className="lg:col-span-3">{t('InlineCommand')}<Textarea value={ruleForm.command} onChange={(e) => setRuleForm({ ...ruleForm, command: e.target.value })} rows={3} /></Label>
+            <p className="lg:col-span-3 text-xs text-muted-foreground">{t('CommandVariablesHelp')}</p>
             <Button className="lg:col-span-3" disabled={createRule.isPending || isLoading}><Plus className="mr-2 h-4 w-4" />{t('Create')}</Button>
           </form>
           <div className="grid gap-2">

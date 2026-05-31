@@ -6,6 +6,7 @@ import pytest
 
 from app.core.application.events import ServiceEventSpoolHandler
 from app.core.domain.entities import EventActionRule
+from app.core.domain.events.abonent_events import AbonentBlockedEvent
 from app.core.domain.events.service_events import (
     ServiceActivatedEvent,
     ServiceRenewedEvent,
@@ -50,6 +51,44 @@ async def test_service_spool_handler_creates_task_for_matching_rule() -> None:
     assert kwargs["payload"]["catalog_service_id"] == str(catalog_id)
     assert kwargs["payload"]["settings"] == {"command": "activate"}
     assert kwargs["payload"]["ip"] == "10.0.0.10"
+
+
+@pytest.mark.asyncio
+async def test_service_spool_handler_creates_task_for_abonent_event() -> None:
+    rule_repo = AsyncMock()
+    spool_repo = AsyncMock()
+    handler = ServiceEventSpoolHandler(rule_repo, spool_repo)
+    rule_repo.get_matching.return_value = [
+        EventActionRule(
+            event_type="abonent.blocked",
+            action_type="ssh.exec",
+            command="block {abonent_id}",
+            priority=80,
+            max_retries=2,
+        )
+    ]
+    spool_repo.create_task.return_value = 77
+    abonent_id = str(uuid4())
+
+    task_ids = await handler(
+        AbonentBlockedEvent(
+            abonent_id=abonent_id,
+            reason="manual",
+        )
+    )
+
+    assert task_ids == [77]
+    rule_repo.get_matching.assert_called_once_with(
+        event_type="abonent.blocked",
+        service_type=None,
+        catalog_service_id=None,
+    )
+    _, kwargs = spool_repo.create_task.call_args
+    assert kwargs["action_type"] == "ssh.exec"
+    assert kwargs["payload"]["abonent_id"] == abonent_id
+    assert kwargs["payload"]["status"] == "BLOCKED"
+    assert kwargs["payload"]["reason"] == "manual"
+    assert kwargs["payload"]["rule"]["settings"]["command"] == "block {abonent_id}"
 
 
 @pytest.mark.asyncio

@@ -164,6 +164,17 @@ class TestAbonentService:
         assert result is True
 
     @pytest.mark.asyncio
+    async def test_delete_inactive_abonent(self):
+        abonent_id = uuid4()
+        self.repo.delete_inactive.return_value = True
+
+        result = await self.service.delete_inactive_abonent(abonent_id)
+
+        assert result is True
+        self.repo.delete_inactive.assert_called_once_with(abonent_id)
+        self.event_bus.publish.assert_called_once()
+
+    @pytest.mark.asyncio
     async def test_deactivate_abonent(self):
         abonent_id = uuid4()
         abonent = Abonent(id=abonent_id)
@@ -175,7 +186,7 @@ class TestAbonentService:
         assert result is abonent
         assert result.status.value == "INACTIVE"
         self.repo.save.assert_called_once_with(abonent)
-        self.event_bus.publish.assert_called_once()
+        assert self.event_bus.publish.await_count == 2
 
     @pytest.mark.asyncio
     async def test_change_balance(self):
