@@ -7,8 +7,12 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { useAuth } from "@/components/auth-provider";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { isClientRegistrationEnabled } from "@/lib/config";
+import { BrandLogo } from "@/components/brand-logo";
 
-const publicRoutes = new Set(["/login", "/register"]);
+const publicRoutes = new Set(
+  isClientRegistrationEnabled ? ["/login", "/register"] : ["/login"]
+);
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,13 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white lg:block">
         <div className="flex h-16 items-center border-b border-slate-200 px-6">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-950 text-sm font-semibold text-white">
-              SH
-            </span>
-            <span>
-              <span className="block text-sm font-semibold">SHM Next</span>
-              <span className="block text-xs text-slate-500">{t("subscriberPortal")}</span>
-            </span>
+            <BrandLogo />
           </Link>
         </div>
 
@@ -70,9 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             <Link href="/dashboard" className="flex items-center gap-3 lg:hidden">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-slate-950 text-sm font-semibold text-white">
-                SH
-              </span>
+              <BrandLogo compact />
               <span className="text-sm font-semibold">SHM Next</span>
             </Link>
             <div className="hidden lg:block">

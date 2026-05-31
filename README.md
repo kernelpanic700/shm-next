@@ -62,6 +62,14 @@ Production-доступ по умолчанию:
 - **Client Panel**: http://localhost:3001
 - **Admin Panel**: http://localhost:3002
 
+Публичная регистрация в личном кабинете управляется переменной `ENABLE_CLIENT_REGISTRATION` в `.env`:
+
+```env
+ENABLE_CLIENT_REGISTRATION=false
+```
+
+После изменения этого флага пересоберите client-образ, так как Next.js подставляет `NEXT_PUBLIC_*` настройки на этапе сборки.
+
 ### Локальный запуск
 
 ```bash
@@ -92,6 +100,10 @@ shm-next/
 ├── alembic/                # Миграции БД
 └── docker-compose.yml
 ```
+
+## 📚 Документация
+
+- [Руководство по работе с биллингом](docs/BILLING_GUIDE.md)
 
 ## 📄 Лицензия
 

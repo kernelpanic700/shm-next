@@ -26,7 +26,7 @@ function isServiceActive(service: ServiceItem) {
 export default function ServicesPage() {
   const { data: services, isLoading } = useMyServices();
   const { locale, t } = useI18n();
-  const items = (services ?? []) as ServiceItem[];
+  const items = useMemo(() => (services ?? []) as ServiceItem[], [services]);
 
   const activeCount = useMemo(() => items.filter(isServiceActive).length, [items]);
   const monthlyTotal = useMemo(

@@ -37,7 +37,7 @@ export default function PaymentsPage() {
   const { data: abonent } = useAbonent();
   const { data: payments, isLoading, refetch } = usePayments(abonent?.id);
   const { locale, t } = useI18n();
-  const paymentItems = (payments ?? []) as PaymentItem[];
+  const paymentItems = useMemo(() => (payments ?? []) as PaymentItem[], [payments]);
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
 

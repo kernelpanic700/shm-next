@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useTranslation } from "react-i18next";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const { logout, user } = useAuthStore();
@@ -33,7 +34,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen flex-col">
       <header className="flex items-center justify-between border-b px-4 py-2">
-        <h1 className="text-lg font-semibold">SHM Next Admin</h1>
+        <div className="flex items-center gap-3">
+          <BrandLogo compact />
+          <h1 className="text-lg font-semibold">SHM Next Admin</h1>
+        </div>
         {user && (
           <div className="flex items-center gap-4">
             <LanguageSwitcher />

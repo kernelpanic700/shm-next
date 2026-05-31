@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import api from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { isClientRegistrationEnabled } from "@/lib/config";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -21,6 +23,25 @@ export default function RegisterPage() {
   const { login } = useAuth();
   const router = useRouter();
   const { t } = useI18n();
+
+  if (!isClientRegistrationEnabled) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="items-center space-y-3">
+            <BrandLogo />
+            <CardTitle className="text-center text-2xl">{t("registrationDisabled")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-center text-sm text-slate-600">
+            <p>{t("registrationDisabledDescription")}</p>
+            <Button type="button" className="w-full" onClick={() => router.push("/login")}>
+              {t("login")}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +72,8 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="items-center space-y-3">
+          <BrandLogo />
           <CardTitle className="text-center text-2xl">{t("registration")}</CardTitle>
         </CardHeader>
         <CardContent>

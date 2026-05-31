@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/store/auth';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { BrandLogo } from '@/components/brand-logo';
 
 export default function LoginPageClient() {
   const [phone, setPhone] = useState('');
@@ -42,7 +43,8 @@ export default function LoginPageClient() {
         <LanguageSwitcher />
       </div>
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
+        <CardHeader className="items-center space-y-3 text-center">
+          <BrandLogo />
           <CardTitle className="text-2xl font-bold">SHM Next Admin</CardTitle>
           <CardDescription>{t('AdminLoginDescription')}</CardDescription>
         </CardHeader>

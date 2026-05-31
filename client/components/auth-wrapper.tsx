@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import { isClientRegistrationEnabled } from "@/lib/config";
 
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -17,7 +18,9 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading || !isClient) return;
 
-    const publicRoutes = ["/login", "/register", "/forgot-password"];
+    const publicRoutes = isClientRegistrationEnabled
+      ? ["/login", "/register", "/forgot-password"]
+      : ["/login", "/forgot-password"];
 
     if (!isAuthenticated && !publicRoutes.includes(pathname)) {
       router.replace("/login");

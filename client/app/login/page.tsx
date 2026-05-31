@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { isClientRegistrationEnabled } from "@/lib/config";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function LoginPage() {
   const [phone, setPhone] = useState("");
@@ -37,7 +39,8 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="items-center space-y-3">
+          <BrandLogo />
           <CardTitle className="text-center text-2xl">{t("personalAccount")}</CardTitle>
         </CardHeader>
         <CardContent>
@@ -67,12 +70,14 @@ export default function LoginPage() {
               {loading ? t("loginProgress") : t("login")}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
-            {t("noAccount")}{" "}
-            <Link href="/register" className="text-primary-600 hover:underline">
-              {t("register")}
-            </Link>
-          </div>
+          {isClientRegistrationEnabled && (
+            <div className="mt-4 text-center text-sm">
+              {t("noAccount")}{" "}
+              <Link href="/register" className="text-primary-600 hover:underline">
+                {t("register")}
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
